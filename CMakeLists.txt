@@ -125,22 +125,23 @@ include_directories(
 #   src/${PROJECT_NAME}/baxter_learning_from_egocentric_video.cpp
 # )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(baxter_learning_from_egocentric_video ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# set header ans source files
+# Controller
+set(MANIPULATION_SOURCE_FILES
+  src/object_manipulation.cpp
+  src/baxter_controller.cpp
+)
+
+set(MANIPULATION_HEADER_FILES
+  src/baxter_controller.h
+)
 
 ## Declare a C++ executable
-# add_executable(baxter_learning_from_egocentric_video_node src/baxter_learning_from_egocentric_video_node.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(baxter_learning_from_egocentric_video_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_executable(object_manipulation ${MANIPULATION_SOURCE_FILES} ${MANIPULATION_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(baxter_learning_from_egocentric_video_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(object_manipulation ${catkin_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(object_manipulation ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
