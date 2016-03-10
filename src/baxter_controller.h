@@ -1,8 +1,13 @@
+#pragma once
 /*
  * File: baxter_controller.h
  * Author: Jangwon lee
  * Email: leejang@indiana.edu
  */
+
+#ifndef BAXTER_CONTROLLER_H_
+#define BAXTER_CONTROLLER_H_
+
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <baxter_core_msgs/EndpointState.h>
@@ -73,3 +78,5 @@ private:
     bool right_has_to_move;
     bool left_has_to_move;
 };
+
+#endif

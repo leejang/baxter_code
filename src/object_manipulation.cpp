@@ -7,6 +7,7 @@
 
 #include <ros/ros.h>
 #include "baxter_controller.h"
+#include "baxter_cameras.h"
 
 using namespace std;
 
@@ -28,6 +29,23 @@ int main(int argc, char **argv)
     // Enable Baxter
     controller->enable();
 
+#if 1
+    // Open Baxter Cameras
+    BaxterCameras *cameras =  new BaxterCameras(nh);
+
+    BaxterCameras::CameraParams head_cam_set;
+    BaxterCameras::CameraParams left_hand_cam_set;
+
+    head_cam_set.width = 1280;
+    head_cam_set.height = 600;
+    head_cam_set.fps = 10;
+    cameras->open(BaxterCameras::HEAD, head_cam_set);
+
+    left_hand_cam_set.width = 640;
+    left_hand_cam_set.height = 480;
+    left_hand_cam_set.fps = 30;
+    cameras->open(BaxterCameras::LEFT_HAND, left_hand_cam_set);
+#endif
     // test
     bool test = true;
     char input;
@@ -39,7 +57,7 @@ int main(int argc, char **argv)
 
     char r_grip;
     char l_grip;
-#if 1
+#if 0
     for (int i=0; i<3; i++) {
         cout << "Set right positions[" << i << "]" << endl;
         cin >> set_right_pos[i];
@@ -108,6 +126,8 @@ int main(int argc, char **argv)
     ros::shutdown();
 
     delete controller;
+    delete cameras;
+
     return 0;
 }
 
