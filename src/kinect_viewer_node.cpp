@@ -13,6 +13,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "kinect_viewer");
     ros::NodeHandle nh;
 
+    ROS_INFO("kinect viewer");
+
     // kinect viewer node
     KinectViewer kinect_view(nh);
 

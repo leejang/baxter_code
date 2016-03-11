@@ -78,7 +78,7 @@ set(MANIPULATION_HEADER_FILES
   src/baxter_cameras.h
 )
 
-# Object manipulation
+# Kinect Viewer
 set(KINECT_VIEWER_SOURCE_FILES
   src/kinect_viewer.cpp
   src/kinect_viewer_node.cpp
