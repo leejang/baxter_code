@@ -66,7 +66,7 @@ include_directories(
 # )
 
 # set header ans source files
-# Controller
+# Object manipulation
 set(MANIPULATION_SOURCE_FILES
   src/object_manipulation.cpp
   src/baxter_controller.cpp
@@ -78,8 +78,18 @@ set(MANIPULATION_HEADER_FILES
   src/baxter_cameras.h
 )
 
+# Object manipulation
+set(KINECT_VIEWER_SOURCE_FILES
+  src/kinect_viewer.cpp
+  src/kinect_viewer_node.cpp
+)
+
+set(KINECT_VIEWER_HEADER_FILES
+  src/kinect_viewer.h
+)
+
 # For OpenCV
-find_package(OpenCV 2)
+find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ executable
@@ -88,6 +98,13 @@ add_executable(object_manipulation ${MANIPULATION_SOURCE_FILES} ${MANIPULATION_H
 target_link_libraries(object_manipulation ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(object_manipulation ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(kinect_viewer ${KINECT_VIEWER_SOURCE_FILES} ${KINECT_VIEWER_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(kinect_viewer ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(kinect_viewer ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
