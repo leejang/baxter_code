@@ -1,0 +1,10 @@
+<launch>
+    <node name="object_manipulation" pkg="baxter_learning_from_egocentric_video" type="object_manipulation">
+    </node>
+
+    <node name="kinect_viewer" pkg="baxter_learning_from_egocentric_video" type="kinect_viewer">
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.513 -0.167 0.569 -0.326 0.660 0.602 0.310 /world /camera_link 10" />
+
+</launch>
