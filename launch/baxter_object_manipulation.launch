@@ -1,4 +1,12 @@
 <launch>
+    <include file="/opt/ros/indigo/share/freenect_launch/launch/freenect.launch">
+    <arg name="rgb_frame_id" value="camera_rgb_optical_frame" />
+    <arg name="depth_frame_id" value="camera_depth_optical_frame" />
+    <!--
+    <arg name="depth_registration" value="true" />
+    -->
+    </include>
+
     <node name="object_manipulation" pkg="baxter_learning_from_egocentric_video" type="object_manipulation">
     </node>
 
