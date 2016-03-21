@@ -8,8 +8,18 @@
 #include <ros/ros.h>
 #include "baxter_controller.h"
 #include "baxter_cameras.h"
+#include "object_detector.h"
 
 using namespace std;
+
+unsigned int mission_start = 0;
+
+void detectedObjCB(const find_object_2d::ObjectsStampedConstPtr& msg)
+{
+    //ROS_INFO("detected Obj CB");
+   
+    mission_start++;
+}
 
 int main(int argc, char **argv)
 {
@@ -29,7 +39,7 @@ int main(int argc, char **argv)
     // Enable Baxter
     controller->enable();
 
-#if 1
+#if 0
     // Open Baxter Cameras
     BaxterCameras *cameras =  new BaxterCameras(nh);
 
@@ -46,6 +56,9 @@ int main(int argc, char **argv)
     left_hand_cam_set.fps = 30;
     cameras->open(BaxterCameras::LEFT_HAND, left_hand_cam_set);
 #endif
+    ObjectDetector *obj_detector = new ObjectDetector(nh);
+    ros::Subscriber sub = nh.subscribe("objectsStamped/pose", 1, detectedObjCB);
+ 
     // test
     bool test = true;
     char input;
@@ -57,6 +70,24 @@ int main(int argc, char **argv)
 
     char r_grip;
     char l_grip;
+
+    cout << "waiting mission start signal.." << endl;
+    while (mission_start < 5) { }
+
+    set_left_pos[0] = obj_detector->pose.getOrigin().x();
+    set_left_pos[1] = obj_detector->pose.getOrigin().y();
+    set_left_pos[2] = obj_detector->pose.getOrigin().z();
+#if 0
+    set_left_ori[0] = obj_detector->pose.getRotation().x();
+    set_left_ori[1] = obj_detector->pose.getRotation().y();
+    set_left_ori[2] = obj_detector->pose.getRotation().z();
+    set_left_ori[3] = obj_detector->pose.getRotation().w();
+#endif
+    set_left_ori[0] = 0.5072;
+    set_left_ori[1] = -0.5125;
+    set_left_ori[2] = 0.4321;
+    set_left_ori[3] = 0.5415;
+
 #if 0
     for (int i=0; i<3; i++) {
         cout << "Set right positions[" << i << "]" << endl;
@@ -69,19 +100,22 @@ int main(int argc, char **argv)
     }
 
     controller->moveRightHandTo(set_right_pos, set_right_ori);
+#endif
 
     for (int i=0; i<3; i++) {
         cout << "Set left positions[" << i << "]" << endl;
-        cin >> set_left_pos[i];
+        cout << set_left_pos[i] << endl;
+        //cin >> set_left_pos[i];
     }
 
     for (int i=0; i<4; i++) {
         cout << "Set left orientations[" << i << "]" <<endl;
-        cin >> set_left_ori[i];
+        cout << set_left_ori[i] << endl;
+        //cin >> set_left_ori[i];
     }
 
     controller->moveLeftHandTo(set_left_pos, set_left_ori);
-#endif
+
     while (test) {
         cout << "Type 'Q' if you want to stop" << endl;
         cin >> input;
@@ -122,11 +156,13 @@ int main(int argc, char **argv)
     }
 #endif
  
-    // shutdown ROS
-    ros::shutdown();
 
     delete controller;
-    delete cameras;
+    //delete cameras;
+    delete obj_detector;
+
+    // shutdown ROS
+    ros::shutdown();
 
     return 0;
 }

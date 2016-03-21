@@ -46,13 +46,13 @@ BaxterCameras::BaxterCameras(ros::NodeHandle nh)
 
 BaxterCameras::~BaxterCameras()
 {
-    if (it_head)
+    if (it_head != NULL)
         delete it_head;
 
-    if (it_l_hand)
+    if (it_l_hand != NULL)
         delete it_l_hand;
  
-    if (it_r_hand)
+    if (it_r_hand != NULL)
         delete it_r_hand;
 }
 

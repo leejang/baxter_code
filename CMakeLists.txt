@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  find_object_2d
 )
 
 ################################################
@@ -71,11 +72,13 @@ set(MANIPULATION_SOURCE_FILES
   src/object_manipulation.cpp
   src/baxter_controller.cpp
   src/baxter_cameras.cpp
+  src/object_detector.cpp
 )
 
 set(MANIPULATION_HEADER_FILES
   src/baxter_controller.h
   src/baxter_cameras.h
+  src/object_detector.h
 )
 
 # Kinect Viewer
