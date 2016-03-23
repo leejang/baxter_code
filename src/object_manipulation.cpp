@@ -72,9 +72,9 @@ int main(int argc, char **argv)
     char l_grip;
 
     cout << "waiting mission start signal.." << endl;
-    while (mission_start < 5) { }
+    while (mission_start < 10) { }
 
-#if 1
+#if 0
     set_left_pos[0] = obj_detector->pose.getOrigin().x();
     set_left_pos[1] = obj_detector->pose.getOrigin().y();
     set_left_pos[2] = obj_detector->pose.getOrigin().z();
@@ -105,15 +105,15 @@ int main(int argc, char **argv)
     controller->moveLeftHandTo(set_left_pos, set_left_ori);
 #endif
 
-#if 0
+#if 1
     set_right_pos[0] = obj_detector->pose.getOrigin().x();
     set_right_pos[1] = obj_detector->pose.getOrigin().y();
     set_right_pos[2] = obj_detector->pose.getOrigin().z();
 
-    set_right_ori[0] = 0.5313;
-    set_right_ori[1] = 0.4834;
-    set_right_ori[2] = 0.5250;
-    set_right_ori[3] = -0.4565;
+    set_right_ori[0] = 0.5383;
+    set_right_ori[1] = 0.5056;
+    set_right_ori[2] = 0.4842;
+    set_right_ori[3] = -0.4690;
 
     for (int i=0; i<3; i++) {
         cout << "Set right positions[" << i << "]" << endl;
