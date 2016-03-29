@@ -93,11 +93,12 @@ set(KINECT_VIEWER_HEADER_FILES
 
 # Hand detector
 set(HAND_DETECTOR_SOURCE_FILES
+  src/hand_detector.cpp
   src/hand_detection_node.cpp
 )
 
 set(HAND_DETECTOR_HEADER_FILES
-  src/hand_detection_node.cpp
+  src/hand_detector.h
 )
 
 # For OpenCV
@@ -108,6 +109,16 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(Caffe)
 include_directories(${Caffe_INCLUDE_DIRS})
 add_definitions(${Caffe_DEFINITIONS}) # ex. -DCPU_ONLY
+
+# For Window Proposals
+set(WINDOW_PROPOSALS_INCLUDE_DIR
+  lib/window_proposals/include)
+
+set(WINDOW_PROPSALS_LINK_LIBRARAY
+   lib/window_propsals/)
+
+include_directories(${WINDOW_PROPOSALS_INCLUDE_DIR})
+link_directories(${WINDOW_PROPOSALS_LINK_LIBRARAY})
 
 ## Declare a C++ executable
 add_executable(object_manipulation ${MANIPULATION_SOURCE_FILES} ${MANIPULATION_HEADER_FILES})
@@ -125,9 +136,9 @@ add_dependencies(kinect_viewer ${catkin_EXPORTED_TARGETS})
 
 
 ## Declare a C++ executable
-add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADER_FILES})
+add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADER_FILES} ${WINDOW_PROPOSALS_INCLUDE_DIR})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hand_detector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Caffe_LIBRARIES})
+target_link_libraries(hand_detector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} ${Caffe_LIBRARIES} ${WINDOW_PROPOSALS_LINK_LIBRARY})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
 

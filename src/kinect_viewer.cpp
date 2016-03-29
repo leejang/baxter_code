@@ -6,6 +6,8 @@
 
 #include "kinect_viewer.h"
 
+#define SAVED_IMG "/home/leejang/data/imgs/frame_001.jpg"
+
 using namespace std;
 
 // colormap for disparities, RGB
@@ -281,7 +283,7 @@ KinectViewer::KinectViewer(ros::NodeHandle nh)
 
 KinectViewer::~KinectViewer()
 {
-    if (it)
+    if (it != NULL)
         delete it;
 }
 
@@ -348,6 +350,7 @@ void KinectViewer::rgbCB(const sensor_msgs::ImageConstPtr &msg)
         return;
     }
 
+    cv::imwrite(SAVED_IMG, cv_ptr->image);
     cv::imshow("Kinect RGB Cam", cv_ptr->image);
     cv::waitKey(1);
 }

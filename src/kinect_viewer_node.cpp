@@ -4,8 +4,8 @@
  * Email: leejang@indiana.edu
  */
 
-#include "kinect_viewer.h"
 #include <ros/ros.h>
+#include "kinect_viewer.h"
 
 int main(int argc, char **argv)
 {

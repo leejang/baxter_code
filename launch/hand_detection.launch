@@ -1,0 +1,5 @@
+<launch>
+    <node name="hand_detector" pkg="baxter_learning_from_egocentric_video" type="hand_detector">
+    </node>
+
+</launch>
