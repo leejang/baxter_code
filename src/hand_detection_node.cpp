@@ -18,6 +18,9 @@ int main(int argc, char **argv)
     // hand detector node
     HandDetector hand_detector(nh);
 
+    // do detection
+    hand_detector.doDetection();
+
     ros::spin();
 
     return 0;

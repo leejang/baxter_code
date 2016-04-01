@@ -17,12 +17,16 @@
 using caffe::Caffe;
 using caffe::Net;
 using caffe::Blob;
+using caffe::vector;
+using caffe::Layer;
+using caffe::shared_ptr;
 
 class HandDetector
 {
 public:
     HandDetector(ros::NodeHandle nh);
     ~HandDetector();
+    void doDetection();
 
 private:
     ros::NodeHandle nh;
