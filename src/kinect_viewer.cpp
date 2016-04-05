@@ -6,7 +6,7 @@
 
 #include "kinect_viewer.h"
 
-#define SAVED_IMG "/home/leejang/data/imgs/frame_001.jpg"
+#define SAVED_IMG "/home/leejang/data/hands/current_frame.jpg"
 
 using namespace std;
 

@@ -4,8 +4,8 @@ function proposals = genWindowProposals(num_windows)
 disp('in [MATLAB] genwindowproposals function');
 
 num_windows = 1000;
-img_path = 'frame_000.jpg';
-output_file_path = 'window.txt';
+img_path = '/home/leejang/data/hands/current_frame.jpg';
+output_file_path = '/home/leejang/data/hands/current_windows.txt';
 
 %proposals = num_windows + 1;
 

@@ -51,14 +51,16 @@ HandDetector::~HandDetector()
 
 void HandDetector::generateWindowProposals()
 {
-
-    cout << "generateWindowProposals" << endl;
-
+    // CAll MATLAB code
     system(WINDOW_PROPOSALS_MATLAB_SCRIPT);
 }
 
 void HandDetector::doDetection()
 {
+
+    // generate window proposals
+    generateWindowProposals();
+
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
@@ -108,5 +110,4 @@ void HandDetector::doDetection()
             window_cnt++;
         }
     }
-
 }
