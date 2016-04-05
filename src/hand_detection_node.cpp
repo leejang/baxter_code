@@ -18,8 +18,11 @@ int main(int argc, char **argv)
     // hand detector node
     HandDetector hand_detector(nh);
 
+    // generate window proposals
+    hand_detector.generateWindowProposals();
+
     // do detection
-    hand_detector.doDetection();
+    //hand_detector.doDetection();
 
     ros::spin();
 

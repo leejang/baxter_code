@@ -8,11 +8,11 @@
 #ifndef HAND_DETECTOR_H_
 #define HAND_DETECTOR_H_
 
+#include <stdlib.h>
 #include <ros/ros.h>
 #include <iostream>
 #include <vector>
 #include <caffe/caffe.hpp>
-//#include "libgenwindowproposals.h"
 
 using caffe::Caffe;
 using caffe::Net;
@@ -26,6 +26,7 @@ class HandDetector
 public:
     HandDetector(ros::NodeHandle nh);
     ~HandDetector();
+    void generateWindowProposals();
     void doDetection();
 
 private:
@@ -34,6 +35,6 @@ private:
     ros::Publisher detected_pub;
 
     // Caffe
-    Net<float> *caffe_net;    
+    Net<float> *caffe_net;
 };
 #endif

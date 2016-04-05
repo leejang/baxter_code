@@ -14,9 +14,12 @@ using namespace std;
 //#define CPU_ONLY
 #define MODEL_PATH "/home/leejang/data/caffe_models/hand_type_classifier.prototxt"
 #define WEIGHTS_PATH "/home/leejang/data/caffe_models/hand_type_classifier.caffemodel"
+// MATLAB SCRIPT
+#define WINDOW_PROPOSALS_MATLAB_SCRIPT "/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals/execute_matlab.sh"
 ///////////////////////////////////
 
-std::fstream& GotoLine(std::fstream& file, unsigned int num){
+std::fstream& GotoLine(std::fstream& file, unsigned int num)
+{
     file.seekg(std::ios::beg);
     for(int i=0; i < num - 1; ++i){
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
@@ -35,15 +38,24 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     Caffe::set_mode(Caffe::GPU);
     Caffe::SetDevice(GPU_DEVICE_ID);
 #endif
-
 }
 
 HandDetector::~HandDetector()
 {
+#if 0
     if (caffe_net != NULL)
         delete caffe_net;
+#endif
+
 }
 
+void HandDetector::generateWindowProposals()
+{
+
+    cout << "generateWindowProposals" << endl;
+
+    system(WINDOW_PROPOSALS_MATLAB_SCRIPT);
+}
 
 void HandDetector::doDetection()
 {
