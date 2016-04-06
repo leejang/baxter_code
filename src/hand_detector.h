@@ -27,6 +27,7 @@ public:
     HandDetector(ros::NodeHandle nh);
     ~HandDetector();
     void doDetection();
+    void generateWindowProposals();
 
 private:
     ros::NodeHandle nh;
@@ -36,6 +37,6 @@ private:
     // Caffe
     Net<float> *caffe_net;
 
-    void generateWindowProposals();
+    //void generateWindowProposals();
 };
 #endif

@@ -6,6 +6,7 @@
 
 #include <ros/ros.h>
 #include "hand_detector.h"
+#include <ctime>
 
 int main(int argc, char **argv)
 {
@@ -19,8 +20,15 @@ int main(int argc, char **argv)
     HandDetector hand_detector(nh);
 
     // do hand detection
+
+    int start_s = clock();
+
     hand_detector.doDetection();
 
+    //hand_detector.generateWindowProposals();
+
+    int stop_s = clock();
+    std::cout << "time: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << std::endl;
     ros::spin();
 
     return 0;

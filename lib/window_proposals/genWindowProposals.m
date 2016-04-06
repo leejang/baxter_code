@@ -1,7 +1,7 @@
 %function proposals = genWindowProposals(img_path, output_file_path, num_windows)
 function proposals = genWindowProposals(num_windows)
 
-disp('in [MATLAB] genwindowproposals function');
+%disp('in [MATLAB] genwindowproposals function');
 
 num_windows = 1000;
 img_path = '/home/leejang/data/hands/current_frame.jpg';

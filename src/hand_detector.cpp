@@ -38,6 +38,13 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     Caffe::set_mode(Caffe::GPU);
     Caffe::SetDevice(GPU_DEVICE_ID);
 #endif
+
+    string model_path = MODEL_PATH;
+    string weights_path = WEIGHTS_PATH;
+
+    // Caffe Initialize
+    caffe_net = new Net<float>(model_path, caffe::TEST);
+    caffe_net->CopyTrainedLayersFrom(weights_path);
 }
 
 HandDetector::~HandDetector()
@@ -57,16 +64,8 @@ void HandDetector::generateWindowProposals()
 
 void HandDetector::doDetection()
 {
-
     // generate window proposals
     generateWindowProposals();
-
-    string model_path = MODEL_PATH;
-    string weights_path = WEIGHTS_PATH;
-
-    // Caffe Initialize
-    caffe_net = new Net<float>(model_path, caffe::TEST);
-    caffe_net->CopyTrainedLayersFrom(weights_path);
 
     const vector<shared_ptr<Layer<float> > >& layers = caffe_net->layers();
 
@@ -106,7 +105,7 @@ void HandDetector::doDetection()
 
         for (int j = 0; j < result[1]->count(); ++j) {
             const float score = result_vec[j];
-            cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
+            //cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
             window_cnt++;
         }
     }
