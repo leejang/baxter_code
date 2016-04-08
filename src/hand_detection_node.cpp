@@ -25,8 +25,6 @@ int main(int argc, char **argv)
 
     hand_detector.doDetection();
 
-    //hand_detector.generateWindowProposals();
-
     int stop_s = clock();
     std::cout << "time: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << std::endl;
     ros::spin();

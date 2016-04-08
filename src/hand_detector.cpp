@@ -14,11 +14,9 @@ using namespace std;
 //#define CPU_ONLY
 #define MODEL_PATH "/home/leejang/data/caffe_models/hand_type_classifier.prototxt"
 #define WEIGHTS_PATH "/home/leejang/data/caffe_models/hand_type_classifier.caffemodel"
-// MATLAB SCRIPT
-#define WINDOW_PROPOSALS_MATLAB_SCRIPT "/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals/execute_matlab.sh"
-//#define MATLAB_ENV_SETUP ". /home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals/matlab_env.sh"
-#define MATLAB_ENV_SETUP "PATH=PATH:/usr/local/MATLAB/R2015a/bin:/usr/local/MATLAB/R2015a/sys/os"
+// MATLAB Implemented Window Proposals
 #define MATLAB_PATH ":/usr/local/MATLAB/R2015a/bin:/usr/local/MATLAB/R2015a/sys/os"
+#define ADD_MATLAB_FUNCTION_DIR "addpath('/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals');"
 ///////////////////////////////////
 
 std::fstream& GotoLine(std::fstream& file, unsigned int num)
@@ -34,6 +32,9 @@ HandDetector::HandDetector(ros::NodeHandle nh)
 {
     this->nh = nh;
 
+    // Initialize Matlab Engine
+    initMatlabEngine();
+
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
     Caffe::set_mode(Caffe::CPU);    
@@ -45,66 +46,57 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
-#if 0
     // Caffe Initialize
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
-#endif
 }
 
 HandDetector::~HandDetector()
 {
-#if 0
     if (caffe_net != NULL)
         delete caffe_net;
-#endif
 
+    if (matlab_ep != NULL)
+        engClose(matlab_ep);
 }
 
-void HandDetector::generateWindowProposals()
+int HandDetector::initMatlabEngine()
 {
-    // CAll MATLAB code
-    //system(WINDOW_PROPOSALS_MATLAB_SCRIPT);
-    //putenv(MATLAB_ENV_SETUP);
+    int retVal = 0;
+
     char *envPath;
     //char *newPath;
     envPath = getenv("PATH");
     
-    //cout << envPath << endl;
-    //cout << strlen(envPath) << endl;
-
     string matlabPath = MATLAB_PATH; 
 
-    //cout << matlabPath << endl;
-    //cout << strlen(matlabPath.c_str()) << endl;
     unsigned int pathLength = strlen(envPath) + strlen(matlabPath.c_str());
   
-    //cout << pathLength << endl;
-
     char *newPath = new char[pathLength];
     
     strcpy(newPath, envPath);
     strcat(newPath, matlabPath.c_str());
 
-    //cout << newPath << endl;
-    //cout << strlen(newPath) << endl;
-
     setenv("PATH", newPath, 1);
-    system("echo $PATH");
+    //system("echo $PATH");
 
-    Engine *matlab_ep;
-
-    if (!(matlab_ep = engOpen("")))
+    // For MATLAB
+    if (!(matlab_ep = engOpen(""))) {
        cerr << "Can't start MATLAB engine" << endl;
-
-    engEvalString(matlab_ep, "addpath('/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals');");
-    engEvalString(matlab_ep, "genWindowProposals(1000);");
-
-    cout << "HERE!!!!!!!!!!!" << endl;
-
-    engClose(matlab_ep);
+       retVal = -1;
+    }
+    // Add Matlab function path
+    string addMatlabFuncDir = ADD_MATLAB_FUNCTION_DIR;
+    engEvalString(matlab_ep, addMatlabFuncDir.c_str());
 
     delete[] newPath;
+
+    return retVal;
+}
+
+void HandDetector::generateWindowProposals()
+{
+    engEvalString(matlab_ep, "genWindowProposals(1000);");
 }
 
 void HandDetector::doDetection()
