@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 #include <iostream>
 #include <vector>
+#include "engine.h"
 #include <caffe/caffe.hpp>
 
 using caffe::Caffe;

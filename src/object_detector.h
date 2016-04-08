@@ -23,7 +23,8 @@ public:
 private:
     ros::NodeHandle nh;
     ros::Subscriber detected_sub;
-    ros::Publisher detected_pub;
+    ros::Subscriber detected_w_depth_sub;
+    ros::Publisher detected_w_depth_pub;
     tf::TransformListener tfListener_;
     void objectsDetectedCallback(const find_object_2d::ObjectsStampedConstPtr & msg);
 };

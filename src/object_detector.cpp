@@ -22,8 +22,8 @@ ObjectDetector::ObjectDetector(ros::NodeHandle nh)
 {
     this->nh = nh;
 
-    detected_sub = nh.subscribe("objectsStamped", 1, &ObjectDetector::objectsDetectedCallback, this);
-    detected_pub = nh.advertise<find_object_2d::ObjectsStamped>("objectsStamped/pose", 1);
+    detected_w_depth_sub = nh.subscribe("objectsStamped", 1, &ObjectDetector::objectsDetectedCallback, this);
+    detected_w_depth_pub = nh.advertise<find_object_2d::ObjectsStamped>("objectsStamped/pose", 1);
 }
 
 ObjectDetector::~ObjectDetector()
@@ -68,6 +68,6 @@ void ObjectDetector::objectsDetectedCallback(const find_object_2d::ObjectsStampe
                         poseCam.getRotation().x(), poseCam.getRotation().y(), poseCam.getRotation().z(), poseCam.getRotation().w());
 #endif
         }
-    detected_pub.publish(msg);
+    detected_w_depth_pub.publish(msg);
     }
 }

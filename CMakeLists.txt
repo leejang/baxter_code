@@ -110,6 +110,25 @@ find_package(Caffe)
 include_directories(${Caffe_INCLUDE_DIRS})
 add_definitions(${Caffe_DEFINITIONS}) # ex. -DCPU_ONLY
 
+# For Window Proposals
+set(MATLAB_INCLUDE_DIR
+  /usr/local/MATLAB/R2015a/extern/include
+)
+
+set(MATLAB_LINK_DIR
+  /usr/local/MATLAB/R2015a/bin/glnxa64
+)
+
+set(MATLAB_LIBRARIES
+  eng
+  mat
+  mex
+  ut
+)
+
+include_directories(${MATLAB_INCLUDE_DIR})
+link_directories(${MATLAB_LINK_DIR})
+
 ## Declare a C++ executable
 add_executable(object_manipulation ${MANIPULATION_SOURCE_FILES} ${MANIPULATION_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
@@ -127,7 +146,7 @@ add_dependencies(kinect_viewer ${catkin_EXPORTED_TARGETS})
 ## Declare a C++ executable
 add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hand_detector ${catkin_LIBRARIES} ${Caffe_LIBRARIES})
+target_link_libraries(hand_detector ${catkin_LIBRARIES} ${Caffe_LIBRARIES} ${MATLAB_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
 
