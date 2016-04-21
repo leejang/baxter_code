@@ -8,12 +8,14 @@
 #ifndef HAND_DETECTOR_H_
 #define HAND_DETECTOR_H_
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <ros/ros.h>
 #include <iostream>
 #include <vector>
 #include "engine.h"
 #include <caffe/caffe.hpp>
+#include <geometry_msgs/Point.h>
 
 using caffe::Caffe;
 using caffe::Net;
@@ -31,8 +33,12 @@ public:
 
 private:
     ros::NodeHandle nh;
-    ros::Subscriber detected_sub;
-    ros::Publisher detected_pub;
+
+    ros::Subscriber left_hand_pose_sub;
+    ros::Subscriber right_hand_pose_sub;
+
+    geometry_msgs::Point left_hand_pose;
+    geometry_msgs::Point right_hand_pose;
 
     // Caffe
     Net<float> *caffe_net;
@@ -41,5 +47,10 @@ private:
 
     int initMatlabEngine();
     void generateWindowProposals();
+    int parseWindowInputFile();
+
+    void leftHandPoseCB(const geometry_msgs::Point pose);
+    void rightHandPoseCB(const geometry_msgs::Point pose);
+ 
 };
 #endif

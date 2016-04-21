@@ -9,6 +9,7 @@
 
 using namespace std;
 
+#define DEBUG 0
 ///////////////////////////////////
 #define GPU_DEVICE_ID 0
 //#define CPU_ONLY
@@ -17,6 +18,7 @@ using namespace std;
 // MATLAB Implemented Window Proposals
 #define MATLAB_PATH ":/usr/local/MATLAB/R2015a/bin:/usr/local/MATLAB/R2015a/sys/os"
 #define ADD_MATLAB_FUNCTION_DIR "addpath('/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals');"
+#define WINDOW_INPUT_FILE "/home/leejang/data/hands/current_windows.txt"
 ///////////////////////////////////
 
 std::fstream& GotoLine(std::fstream& file, unsigned int num)
@@ -32,8 +34,15 @@ HandDetector::HandDetector(ros::NodeHandle nh)
 {
     this->nh = nh;
 
+    // subscribers to get each joint position of user
+    left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint", 1, &HandDetector::leftHandPoseCB, this);
+    right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint", 1, &HandDetector::rightHandPoseCB, this);
+ 
     // Initialize Matlab Engine
     initMatlabEngine();
+
+    // generate window proposals
+    generateWindowProposals();
 
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
@@ -46,9 +55,12 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
+#if 0
     // Caffe Initialize
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
+#endif
+
 }
 
 HandDetector::~HandDetector()
@@ -71,9 +83,9 @@ int HandDetector::initMatlabEngine()
     string matlabPath = MATLAB_PATH; 
 
     unsigned int pathLength = strlen(envPath) + strlen(matlabPath.c_str());
-  
+
     char *newPath = new char[pathLength];
-    
+
     strcpy(newPath, envPath);
     strcat(newPath, matlabPath.c_str());
 
@@ -82,8 +94,8 @@ int HandDetector::initMatlabEngine()
 
     // For MATLAB
     if (!(matlab_ep = engOpen(""))) {
-       cerr << "Can't start MATLAB engine" << endl;
-       retVal = -1;
+        cerr << "Can't start MATLAB engine" << endl;
+        retVal = -1;
     }
     // Add Matlab function path
     string addMatlabFuncDir = ADD_MATLAB_FUNCTION_DIR;
@@ -99,10 +111,57 @@ void HandDetector::generateWindowProposals()
     engEvalString(matlab_ep, "genWindowProposals(1000);");
 }
 
+int HandDetector::parseWindowInputFile()
+{
+    int retVal = 0;
+
+    FILE * pFile;
+
+    pFile = fopen(WINDOW_INPUT_FILE,"r");
+
+    if (pFile != NULL) {
+
+        fclose (pFile);
+    } else {
+        cerr << "Can't open widnow input file" << endl;
+        retVal = -1;
+    }
+
+    cout << "parse done!" << endl;
+    return retVal;
+}
+
+void HandDetector::leftHandPoseCB(const geometry_msgs::Point pose)
+{
+    //ROS_INFO("leftHandPoseCB");
+    left_hand_pose = pose;
+
+#if DEBUG
+    cout << "left_hand_pose: " << left_hand_pose.x << ", "
+         << left_hand_pose.y << ", " << left_hand_pose.z << endl;
+#endif
+}
+
+void HandDetector::rightHandPoseCB(const geometry_msgs::Point pose)
+{
+    //ROS_INFO("rightHandPoseCB");
+    right_hand_pose = pose;
+
+#if DEBUG
+    cout << "right_hand_pose: " << right_hand_pose.x << ", "
+         << right_hand_pose.y << ", " << right_hand_pose.z << endl;
+#endif
+}
+
 void HandDetector::doDetection()
 {
     // generate window proposals
     generateWindowProposals();
+
+    // parse generated window input file
+    parseWindowInputFile();
+
+    cout << "hand detection done!" << endl;
 
 #if 0
     const vector<shared_ptr<Layer<float> > >& layers = caffe_net->layers();
@@ -141,9 +200,24 @@ void HandDetector::doDetection()
 
         const float* result_vec = result[1]->cpu_data();
 
+        // number of windows in each batch_size
+        //cout << result[1]->count() << endl;
         for (int j = 0; j < result[1]->count(); ++j) {
             const float score = result_vec[j];
             //cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
+            // my left hand
+            if (window_cnt % 5 == 1 && score > 0.9)
+                cout << "[My left hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
+            // my right hand
+            if (window_cnt % 5 == 2 && score > 0.9)
+                cout << "[My right hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
+            // your left hand
+            if (window_cnt % 5 == 3 && score > 0.9)
+                cout << "[Your left hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
+            // your right hand
+            if (window_cnt % 5 == 4 && score > 0.9)
+                cout << "[Your right hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
+
             window_cnt++;
         }
     }

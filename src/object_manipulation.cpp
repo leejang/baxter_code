@@ -110,10 +110,10 @@ int main(int argc, char **argv)
     set_right_pos[1] = obj_detector->pose.getOrigin().y();
     set_right_pos[2] = obj_detector->pose.getOrigin().z();
 
-    set_right_ori[0] = 0.5383;
-    set_right_ori[1] = 0.5056;
-    set_right_ori[2] = 0.4842;
-    set_right_ori[3] = -0.4690;
+    set_right_ori[0] = 0.5892;
+    set_right_ori[1] = 0.4416;
+    set_right_ori[2] = 0.5439;
+    set_right_ori[3] = -0.4023;
 
     for (int i=0; i<3; i++) {
         cout << "Set right positions[" << i << "]" << endl;

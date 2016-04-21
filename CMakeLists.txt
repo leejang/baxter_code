@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   find_object_2d
+  tf
 )
 
 ################################################
@@ -101,6 +102,16 @@ set(HAND_DETECTOR_HEADER_FILES
   src/hand_detector.h
 )
 
+# Skeleton tracker
+set(SKELETON_TRACKER_SOURCE_FILES
+  src/skeleton_tracker.cpp
+  src/skeleton_tracker_node.cpp
+)
+
+set(SKELETON_TRACKER_HEADER_FILES
+  src/skeleton_tracker.h
+)
+
 # For OpenCV
 find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -125,9 +136,31 @@ set(MATLAB_LIBRARIES
   mex
   ut
 )
-
 include_directories(${MATLAB_INCLUDE_DIR})
 link_directories(${MATLAB_LINK_DIR})
+
+##########################################
+# To used skeltrack lib instead of openni_tracker.
+# Currently, we use openni_tracker.
+if(FALSE)
+# For Skeleton Tracking
+set(SKEL_TRACK_INCLUDE_DIR
+  /home/leejang/local/include/skeltrack-0.1
+  /usr/include/glib-2.0
+  /usr/lib/x86_64-linux-gnu/glib-2.0/include
+)
+
+set(SKEL_TRACK_LINK_DIR
+  /home/leejang/local/lib
+)
+
+set(SKEL_TRACK_LIBRARIES
+  skeltrack-0.1
+)
+include_directories(${SKEL_TRACK_INCLUDE_DIR})
+link_directories(${SKEL_TRACK_LINK_DIR})
+endif()
+###########################################
 
 ## Declare a C++ executable
 add_executable(object_manipulation ${MANIPULATION_SOURCE_FILES} ${MANIPULATION_HEADER_FILES})
@@ -149,6 +182,13 @@ add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADE
 target_link_libraries(hand_detector ${catkin_LIBRARIES} ${Caffe_LIBRARIES} ${MATLAB_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(skeleton_tracker ${SKELETON_TRACKER_SOURCE_FILES} ${SKELETON_TRACKER_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(skeleton_tracker ${catkin_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(skeleton_tracker ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
