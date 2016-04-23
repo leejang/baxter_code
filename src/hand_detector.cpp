@@ -55,11 +55,9 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
-#if 0
     // Caffe Initialize
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
-#endif
 
 }
 
@@ -108,7 +106,7 @@ int HandDetector::initMatlabEngine()
 
 void HandDetector::generateWindowProposals()
 {
-    engEvalString(matlab_ep, "genWindowProposals(1000);");
+    engEvalString(matlab_ep, "genWindowProposals(1000, 'test');");
 }
 
 int HandDetector::parseWindowInputFile()

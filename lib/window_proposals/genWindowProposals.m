@@ -1,5 +1,5 @@
 %function proposals = genWindowProposals(img_path, output_file_path, num_windows)
-function proposals = genWindowProposals(num_windows)
+function proposals = genWindowProposals(num_windows, phase)
 
 img_path = '/home/leejang/data/hands/current_frame.jpg';
 output_file_path = '/home/leejang/data/hands/current_windows.txt';
@@ -9,25 +9,35 @@ output_file_path = '/home/leejang/data/hands/current_windows.txt';
 % add KDE package
 addpath(genpath('kde'));
 
-% load skin and KDE models
-load('box_proposal_model.mat', 'model');
+if strcmp(phase, 'test')
+  % load skin and KDE models
+  load('box_proposal_model_test.mat', 'model');
+elseif strcmp(phase, 'train')
+  % load skin and KDE models
+  load('box_proposal_model_train.mat', 'model');
+else
+  disp('please choose correct (test or train) phase');
+  return
+end
 
 % OPEN FILE
-% output_file = fopen(['windows.txt'], 'W');
 output_file = fopen(output_file_path, 'W');
 
 image_index = 0;
 % get a target image
 img = imread(img_path);
 
+% size of image
+[img_height, img_width, img_dim] = size(img);
+
 % generate window proposals
-boxes = sampleProposals(img, model.kde_whxy_hands, model.skin, num_windows);
+boxes = sampleProposals(img, model.kde_whxy_hands, model.skin, num_windows, phase);
 
 %turn [r c r c] into [x y x y]
 boxes = [boxes(:,2) boxes(:,1) boxes(:,4) boxes(:,3)];
 n_boxes = size(boxes, 1);
 
-fprintf(output_file, '# %d\n%s\n3\n720\n1280\n', image_index, img_path);
+fprintf(output_file, '# %d\n%s\n%d\n%d\n%d\n', image_index, img_path, img_dim, img_height, img_width);
 
 % print number of windows
 fprintf(output_file, '%d\n', n_boxes);
@@ -42,4 +52,3 @@ end
 fclose(output_file);
 
 end
-
