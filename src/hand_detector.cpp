@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define DEBUG 0
+#define DEBUG 1
 ///////////////////////////////////
 #define GPU_DEVICE_ID 0
 //#define CPU_ONLY
@@ -35,8 +35,8 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     this->nh = nh;
 
     // subscribers to get each joint position of user
-    left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint", 1, &HandDetector::leftHandPoseCB, this);
-    right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint", 1, &HandDetector::rightHandPoseCB, this);
+    left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint_uv", 1, &HandDetector::leftHandPoseCB, this);
+    right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint_uv", 1, &HandDetector::rightHandPoseCB, this);
  
     // Initialize Matlab Engine
     initMatlabEngine();
@@ -129,25 +129,25 @@ int HandDetector::parseWindowInputFile()
     return retVal;
 }
 
-void HandDetector::leftHandPoseCB(const geometry_msgs::Point pose)
+void HandDetector::leftHandPoseCB(const geometry_msgs::Pose2D pose)
 {
     //ROS_INFO("leftHandPoseCB");
     left_hand_pose = pose;
 
 #if DEBUG
     cout << "left_hand_pose: " << left_hand_pose.x << ", "
-         << left_hand_pose.y << ", " << left_hand_pose.z << endl;
+         << left_hand_pose.y << endl;
 #endif
 }
 
-void HandDetector::rightHandPoseCB(const geometry_msgs::Point pose)
+void HandDetector::rightHandPoseCB(const geometry_msgs::Pose2D pose)
 {
     //ROS_INFO("rightHandPoseCB");
     right_hand_pose = pose;
 
 #if DEBUG
     cout << "right_hand_pose: " << right_hand_pose.x << ", "
-         << right_hand_pose.y << ", " << right_hand_pose.z << endl;
+         << right_hand_pose.y << endl;
 #endif
 }
 

@@ -5,62 +5,135 @@
  */
 
 #include "skeleton_tracker.h"
-#define ROS_DEPTH_PATH "/camera/depth/image_raw"
+
+// Kinect Camera
+#define ROS_CAM_DEPTH_RAW_PATH "/camera/depth/image_raw"
+#define ROS_CAM_RGB_COLOR_PATH "/camera/rgb/image_color"
 
 using namespace std;
 
 SkeletonTracker::SkeletonTracker(ros::NodeHandle nh){
     this->nh = nh;
     
-    head_joint = nh.advertise<geometry_msgs::Point>("skeleton/head_joint", 1);
-    left_hand_joint = nh.advertise<geometry_msgs::Point>("skeleton/left_hand_joint", 1);
-    right_hand_joint = nh.advertise<geometry_msgs::Point>("skeleton/right_hand_joint", 1);
+    it = new image_transport::ImageTransport(nh);
 
-    sub_depth = nh.subscribe(ROS_DEPTH_PATH, 10, &SkeletonTracker::onNewDepthCallback, this);
+    head_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/head_joint_uv", 1);
+    left_hand_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/left_hand_joint_uv", 1);
+    right_hand_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/right_hand_joint_uv", 1);
+
+    sub_depth = it->subscribeCamera(ROS_CAM_RGB_COLOR_PATH, 10, &SkeletonTracker::onNewImageCallback, this);
+
+    // Setup output video to save video file
+    output_video.open("skeleton_track.avi", CV_FOURCC('I', 'Y', 'U', 'V'), 30, cv::Size(640, 480), true);
+
+    if (!output_video.isOpened())
+        ROS_ERROR("!!! Output video could not be opened");
 }
 
 SkeletonTracker::~SkeletonTracker()
 {
+    if (it != NULL)
+        delete it;
+
+    output_video.release();
 }
 
-void SkeletonTracker::onNewDepthCallback(const sensor_msgs::Image& dimage)
+void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image_msg,
+                                         const sensor_msgs::CameraInfoConstPtr& info_msg)
 {
-    if (&dimage == NULL) {
+    cv_bridge::CvImagePtr cv_ptr;
+    cam_model.fromCameraInfo(info_msg);
+
+    if (&image_msg == NULL) {
         ROS_WARN_THROTTLE(1,"NULL image received.");
         return;
     } else {
-       // ROS_INFO("Received Depth Info");
 
        try
        {
-           tfListener.lookupTransform("/head_1", "/camera_depth_optical_frame", ros::Time(0), tf_head);
-           tfListener.lookupTransform("/left_hand_1", "/camera_depth_optical_frame", ros::Time(0), tf_left_hand);
-           tfListener.lookupTransform("/right_hand_1", "/camera_depth_optical_frame", ros::Time(0), tf_right_hand);
+           cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
+       }
+       catch (cv_bridge::Exception& e)
+       {
+           ROS_ERROR("Image acquisition failed: %s", e.what());
+           return;
+       }
+
+       try
+       {
+           // tfansform each body position to camera frame
+           tfListener.lookupTransform(cam_model.tfFrame(), "/head_1", ros::Time(0), tf_head);
+           tfListener.lookupTransform(cam_model.tfFrame(), "/left_hand_1", ros::Time(0), tf_left_hand);
+           tfListener.lookupTransform(cam_model.tfFrame(), "/right_hand_1", ros::Time(0), tf_right_hand);
+           tfListener.lookupTransform(cam_model.tfFrame(), "/torso_1", ros::Time(0), tf_torso);
        }
        catch (tf::TransformException & ex)
        {
             //ROS_WARN("%s",ex.what());
        }
 
+       //ROS_INFO_STREAM(cam_model.tfFrame());
+
        // Head joint
-       head_pose.x = tf_head.getOrigin().x();
-       head_pose.y = tf_head.getOrigin().y();
-       head_pose.z = tf_head.getOrigin().z();
+       head_pt = tf_head.getOrigin();
+       // camera frame to open cv coordinate frame
+       cv::Point3d head_cv_pt(-head_pt.y(), -head_pt.z(), head_pt.x());
+       head_uv = cam_model.project3dToPixel(head_cv_pt);
+       head_pose.x = head_uv.x;
+       head_pose.y = head_uv.y;
+       head_pose.theta = 0;
 
        // Left Hand joint
-       left_hand_pose.x = tf_left_hand.getOrigin().x();
-       left_hand_pose.y = tf_left_hand.getOrigin().y();
-       left_hand_pose.z = tf_left_hand.getOrigin().z();
+       left_hand_pt = tf_left_hand.getOrigin();
+       // camera frame to open cv coordinate frame
+       cv::Point3d left_hand_cv_pt(-left_hand_pt.y(), -left_hand_pt.z(), left_hand_pt.x());
+       left_hand_uv = cam_model.project3dToPixel(left_hand_cv_pt);
+       left_hand_pose.x = left_hand_uv.x;
+       left_hand_pose.y = left_hand_uv.y;
+       left_hand_pose.theta = 0;
 
        // Right Hand joint
-       right_hand_pose.x = tf_right_hand.getOrigin().x();
-       right_hand_pose.y = tf_right_hand.getOrigin().y();
-       right_hand_pose.z = tf_right_hand.getOrigin().z();
+       right_hand_pt = tf_right_hand.getOrigin();
+       // camera frame to open cv coordinate frame
+       cv::Point3d right_hand_cv_pt(-right_hand_pt.y(), -right_hand_pt.z(), right_hand_pt.x());
+       right_hand_uv = cam_model.project3dToPixel(right_hand_cv_pt);
+       right_hand_pose.x = right_hand_uv.x;
+       right_hand_pose.y = right_hand_uv.y;
+       right_hand_pose.theta = 0;
+
+       // Torso joint
+       torso_pt = tf_torso.getOrigin();
+       // camera frame to open cv coordinate frame
+       cv::Point3d torso_cv_pt(-torso_pt.y(), -torso_pt.z(), torso_pt.x());
+       torso_uv = cam_model.project3dToPixel(torso_cv_pt);
+       torso_pose.x = torso_uv.x;
+       torso_pose.y = torso_uv.y;
+       torso_pose.theta = 0;
 
        // Publish each joint positions
        head_joint.publish(head_pose);
        left_hand_joint.publish(left_hand_pose);
        right_hand_joint.publish(right_hand_pose);
+
+       static const int RADIUS = 10;
+       cv::circle(cv_ptr->image, head_uv, RADIUS, CV_RGB(0,255,0), -1);
+       cv::circle(cv_ptr->image, left_hand_uv, RADIUS, CV_RGB(255,0,0), -1);
+       cv::circle(cv_ptr->image, right_hand_uv, RADIUS, CV_RGB(0,0,255), -1);
+       cv::circle(cv_ptr->image, torso_uv, RADIUS, CV_RGB(0,0,0), -1);
+
+       CvPoint head_origin = cvPoint(head_uv.x - 20, head_uv.y - 20);
+       cv::putText(cv_ptr->image, "Head", head_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(0,255,0));
+       CvPoint left_h_origin = cvPoint(left_hand_uv.x - 20, left_hand_uv.y - 20);
+       cv::putText(cv_ptr->image, "Left Hand", left_h_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255,0,0));
+       CvPoint right_h_origin = cvPoint(right_hand_uv.x - 20, right_hand_uv.y - 20);
+       cv::putText(cv_ptr->image, "Right Hand", right_h_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(0,0,255));
+       CvPoint torso_origin = cvPoint(torso_uv.x - 20, torso_uv.y - 20);
+       cv::putText(cv_ptr->image, "Torso", torso_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(0,0,0));
+
+       output_video.write(cv_ptr->image);
+
+       cv::imshow("Skeletton Tracker Projection(3D -> 2D)", cv_ptr->image);
+       cv::waitKey(1);
     }
 }
 

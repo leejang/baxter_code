@@ -15,7 +15,7 @@
 #include <vector>
 #include "engine.h"
 #include <caffe/caffe.hpp>
-#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose2D.h>
 
 using caffe::Caffe;
 using caffe::Net;
@@ -37,8 +37,8 @@ private:
     ros::Subscriber left_hand_pose_sub;
     ros::Subscriber right_hand_pose_sub;
 
-    geometry_msgs::Point left_hand_pose;
-    geometry_msgs::Point right_hand_pose;
+    geometry_msgs::Pose2D left_hand_pose;
+    geometry_msgs::Pose2D right_hand_pose;
 
     // Caffe
     Net<float> *caffe_net;
@@ -49,8 +49,8 @@ private:
     void generateWindowProposals();
     int parseWindowInputFile();
 
-    void leftHandPoseCB(const geometry_msgs::Point pose);
-    void rightHandPoseCB(const geometry_msgs::Point pose);
+    void leftHandPoseCB(const geometry_msgs::Pose2D pose);
+    void rightHandPoseCB(const geometry_msgs::Pose2D pose);
  
 };
 #endif

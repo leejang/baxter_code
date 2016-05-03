@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   find_object_2d
   tf
+  image_geometry
 )
 
 ################################################
@@ -186,7 +187,7 @@ add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
 ## Declare a C++ executable
 add_executable(skeleton_tracker ${SKELETON_TRACKER_SOURCE_FILES} ${SKELETON_TRACKER_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(skeleton_tracker ${catkin_LIBRARIES})
+target_link_libraries(skeleton_tracker ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(skeleton_tracker ${catkin_EXPORTED_TARGETS})
 
