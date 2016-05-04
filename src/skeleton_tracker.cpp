@@ -29,6 +29,8 @@ SkeletonTracker::SkeletonTracker(ros::NodeHandle nh){
     right_hand_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/right_hand_joint_uv", 1);
     torso_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/torso_joint_uv", 1);
 
+    robot_screen = nh.advertise<sensor_msgs::Image>("robot/xdisplay", 1, true);
+
     sub_depth = it->subscribeCamera(ROS_CAM_RGB_COLOR_PATH, 10, &SkeletonTracker::onNewImageCallback, this);
 
 #if REC_VIDEO
@@ -62,6 +64,8 @@ SkeletonTracker::SkeletonTracker(ros::NodeHandle nh){
     cv::waitKey(0);
     cv::destroyWindow("Play recorded video");
 #endif
+
+    full_screen.image = cv::Mat(600, 1024, CV_8UC3);
 }
 
 SkeletonTracker::~SkeletonTracker()
@@ -102,6 +106,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        try
        {
            // tfansform each body position to camera frame
+           // get the transform from camera frame to the frame of each joint
            tfListener.lookupTransform(cam_model.tfFrame(), "/head_1", ros::Time(0), tf_head);
            tfListener.lookupTransform(cam_model.tfFrame(), "/left_hand_1", ros::Time(0), tf_left_hand);
            tfListener.lookupTransform(cam_model.tfFrame(), "/right_hand_1", ros::Time(0), tf_right_hand);
@@ -158,9 +163,10 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        right_hand_joint.publish(right_hand_pose);
        torso_joint.publish(torso_pose);
 
+#if 0
        cout << "(In-Skel) Test cnt: " << test_cnt << endl;
        test_cnt++;
-
+#endif
        static const int RADIUS = 10;
        cv::circle(cv_ptr->image, head_uv, RADIUS, CV_RGB(0,255,0), -1);
        cv::circle(cv_ptr->image, left_hand_uv, RADIUS, CV_RGB(255,0,0), -1);
@@ -180,8 +186,16 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        output_video.write(cv_ptr->image);
 #endif
 
+#if 0
        cv::imshow("Skeletton Tracker Projection(3D -> 2D)", cv_ptr->image);
        cv::waitKey(1);
+#endif
+
+       // display on Baxter's screen
+       full_screen.header = cv_ptr->header;
+       full_screen.encoding = cv_ptr->encoding;
+       cv::resize(cv_ptr->image, full_screen.image, full_screen.image.size(), 0, 0, cv::INTER_NEAREST);
+       robot_screen.publish(full_screen.toImageMsg());
     }
 }
 

@@ -27,9 +27,12 @@ public:
 
 private:
     ros::NodeHandle nh;
+    // to publish each joint position in 2D (u,v)
     ros::Publisher head_joint;
     ros::Publisher left_hand_joint, right_hand_joint;
     ros::Publisher torso_joint;
+    // to display skeleton tracking image on Baxter's screen
+    ros::Publisher robot_screen;
 
     tf::TransformListener tfListener;
 
@@ -62,9 +65,11 @@ private:
 
     // to save video output
     cv::VideoWriter output_video;
-
     // to open video file for test
     cv::VideoCapture capture_video;
+
+    // to display on the Baxter's screen with full size (1024 * 600)
+    cv_bridge::CvImage full_screen;
 };
 
 #endif
