@@ -35,6 +35,7 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     this->nh = nh;
 
     // subscribers to get each joint position of user
+    head_pose_sub = nh.subscribe("skeleton/head_joint_uv", 1, &HandDetector::headPoseCB, this);
     left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint_uv", 1, &HandDetector::leftHandPoseCB, this);
     right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint_uv", 1, &HandDetector::rightHandPoseCB, this);
  
@@ -59,6 +60,7 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
 
+    head_pose_cnt = 0;
 }
 
 HandDetector::~HandDetector()
@@ -127,6 +129,15 @@ int HandDetector::parseWindowInputFile()
 
     cout << "parse done!" << endl;
     return retVal;
+}
+
+void HandDetector::headPoseCB(const geometry_msgs::Pose2D pose)
+{
+#if DEBUG
+    cout << "headPoseCB Count: " << head_pose_cnt << endl;
+#endif
+    doDetection();
+    head_pose_cnt++;
 }
 
 void HandDetector::leftHandPoseCB(const geometry_msgs::Pose2D pose)

@@ -10,6 +10,13 @@
 #define ROS_CAM_DEPTH_RAW_PATH "/camera/depth/image_raw"
 #define ROS_CAM_RGB_COLOR_PATH "/camera/rgb/image_color"
 
+// To record skeleton tracker video
+#define REC_VIDEO 0
+// To play recorded video
+#define PLAY_VIDEO 0
+
+unsigned int test_cnt = 0;
+
 using namespace std;
 
 SkeletonTracker::SkeletonTracker(ros::NodeHandle nh){
@@ -20,14 +27,41 @@ SkeletonTracker::SkeletonTracker(ros::NodeHandle nh){
     head_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/head_joint_uv", 1);
     left_hand_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/left_hand_joint_uv", 1);
     right_hand_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/right_hand_joint_uv", 1);
+    torso_joint = nh.advertise<geometry_msgs::Pose2D>("skeleton/torso_joint_uv", 1);
 
     sub_depth = it->subscribeCamera(ROS_CAM_RGB_COLOR_PATH, 10, &SkeletonTracker::onNewImageCallback, this);
 
+#if REC_VIDEO
     // Setup output video to save video file
     output_video.open("skeleton_track.avi", CV_FOURCC('I', 'Y', 'U', 'V'), 30, cv::Size(640, 480), true);
 
     if (!output_video.isOpened())
         ROS_ERROR("!!! Output video could not be opened");
+#endif
+
+#if PLAY_VIDEO
+    // open video file for test
+    capture_video.open("skeleton_track.avi");
+    cv::Mat frame;
+
+    if (!capture_video.isOpened())
+        ROS_ERROR("!!! Error when opening video file");
+    else
+        cv::namedWindow("Play recorded video", 1);
+
+    while(1) {
+        capture_video >> frame;
+        if (frame.empty())
+            break;
+        else {
+            cv::imshow("Play recorded video", frame);
+            cv::waitKey(20);
+        }
+    }
+    // close window
+    cv::waitKey(0);
+    cv::destroyWindow("Play recorded video");
+#endif
 }
 
 SkeletonTracker::~SkeletonTracker()
@@ -35,7 +69,13 @@ SkeletonTracker::~SkeletonTracker()
     if (it != NULL)
         delete it;
 
+#if REC_VIDEO
     output_video.release();
+#endif
+
+#if PLAY_VIDEO
+    capture_video.release();
+#endif
 }
 
 void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image_msg,
@@ -112,8 +152,14 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
 
        // Publish each joint positions
        head_joint.publish(head_pose);
+       // Note that Openni tracker uses camera point of view
+       // thus, left hand is user's right hand and vice versa.
        left_hand_joint.publish(left_hand_pose);
        right_hand_joint.publish(right_hand_pose);
+       torso_joint.publish(torso_pose);
+
+       cout << "(In-Skel) Test cnt: " << test_cnt << endl;
+       test_cnt++;
 
        static const int RADIUS = 10;
        cv::circle(cv_ptr->image, head_uv, RADIUS, CV_RGB(0,255,0), -1);
@@ -130,7 +176,9 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        CvPoint torso_origin = cvPoint(torso_uv.x - 20, torso_uv.y - 20);
        cv::putText(cv_ptr->image, "Torso", torso_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(0,0,0));
 
+#if REC_VIDEO
        output_video.write(cv_ptr->image);
+#endif
 
        cv::imshow("Skeletton Tracker Projection(3D -> 2D)", cv_ptr->image);
        cv::waitKey(1);

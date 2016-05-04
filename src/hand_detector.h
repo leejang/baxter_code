@@ -34,6 +34,7 @@ public:
 private:
     ros::NodeHandle nh;
 
+    ros::Subscriber head_pose_sub;
     ros::Subscriber left_hand_pose_sub;
     ros::Subscriber right_hand_pose_sub;
 
@@ -49,8 +50,10 @@ private:
     void generateWindowProposals();
     int parseWindowInputFile();
 
+    void headPoseCB(const geometry_msgs::Pose2D pose);
     void leftHandPoseCB(const geometry_msgs::Pose2D pose);
     void rightHandPoseCB(const geometry_msgs::Pose2D pose);
- 
+
+    unsigned int head_pose_cnt;
 };
 #endif

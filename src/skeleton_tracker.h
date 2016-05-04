@@ -29,6 +29,7 @@ private:
     ros::NodeHandle nh;
     ros::Publisher head_joint;
     ros::Publisher left_hand_joint, right_hand_joint;
+    ros::Publisher torso_joint;
 
     tf::TransformListener tfListener;
 
@@ -61,6 +62,9 @@ private:
 
     // to save video output
     cv::VideoWriter output_video;
+
+    // to open video file for test
+    cv::VideoCapture capture_video;
 };
 
 #endif
