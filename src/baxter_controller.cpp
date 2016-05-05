@@ -132,6 +132,43 @@ void BaxterController::leftGripCallback(const baxter_core_msgs::EndEffectorState
     }
 }
 
+int BaxterController::moveRightHandTo(double set_pos[])
+{
+    cout << right << "right hand positions: " <<
+        set_pos[0] << ","  << set_pos[1] << "," << set_pos[2] << endl;
+
+    baxter_core_msgs::SolvePositionIK srv;
+    geometry_msgs::PoseStamped pose_stamped;
+
+    pose_stamped.header.stamp = ros::Time::now();
+    pose_stamped.header.frame_id = "base";
+    pose_stamped.pose.position.x = set_pos[0];
+    pose_stamped.pose.position.y = set_pos[1];
+    pose_stamped.pose.position.z = set_pos[2];
+    pose_stamped.pose.orientation.x = cur_right_ori[0];
+    pose_stamped.pose.orientation.y = cur_right_ori[1];
+    pose_stamped.pose.orientation.z = cur_right_ori[2];
+    pose_stamped.pose.orientation.w = cur_right_ori[3];
+    srv.request.pose_stamp.push_back(geometry_msgs::PoseStamped());
+    srv.request.pose_stamp.push_back(pose_stamped);
+
+    if (!right_ik_client.call(srv)) {
+       cout << "\033[1;31m[right hand]Call to inverse kinematic solver service failed\033[0m" << endl;
+       return -1;
+    } else if(!srv.response.isValid[1]) {
+       cout << "\033[1;31m[right hand]Inverse kinematic solver found no solution for that movement\033[0m" << endl;
+       return -1;
+    } else {
+       right_has_to_move = false;
+       right_joint_cmd.mode =  baxter_core_msgs::JointCommand::POSITION_MODE;
+       right_joint_cmd.names = srv.response.joints[1].name;
+       right_joint_cmd.command = srv.response.joints[1].position;
+       right_has_to_move = true;
+    }
+
+    return 0;
+}
+
 int BaxterController::moveRightHandTo(double set_pos[], double set_ori[])
 {
     cout << right << "right hand positions: " <<
@@ -166,6 +203,43 @@ int BaxterController::moveRightHandTo(double set_pos[], double set_ori[])
        right_joint_cmd.names = srv.response.joints[1].name;
        right_joint_cmd.command = srv.response.joints[1].position;
        right_has_to_move = true;
+    }
+
+    return 0;
+}
+
+int BaxterController::moveLeftHandTo(double set_pos[])
+{
+    cout << right << "left hand positions: " <<
+        set_pos[0] << ","  << set_pos[1] << "," << set_pos[2] << endl;
+
+    baxter_core_msgs::SolvePositionIK srv;
+    geometry_msgs::PoseStamped pose_stamped;
+
+    pose_stamped.header.stamp = ros::Time::now();
+    pose_stamped.header.frame_id = "base";
+    pose_stamped.pose.position.x = set_pos[0];
+    pose_stamped.pose.position.y = set_pos[1];
+    pose_stamped.pose.position.z = set_pos[2];
+    pose_stamped.pose.orientation.x = cur_left_ori[0];
+    pose_stamped.pose.orientation.y = cur_left_ori[1];
+    pose_stamped.pose.orientation.z = cur_left_ori[2];
+    pose_stamped.pose.orientation.w = cur_left_ori[3];
+    srv.request.pose_stamp.push_back(geometry_msgs::PoseStamped());
+    srv.request.pose_stamp.push_back(pose_stamped);
+
+    if (!left_ik_client.call(srv)) {
+       cout << "\033[1;31m[left hand]Call to inverse kinematic solver service failed\033[0m" << endl;
+       return -1;
+    } else if(!srv.response.isValid[1]) {
+       cout << "\033[1;31m[left hand]Inverse kinematic solver found no solution for that movement\033[0m" << endl;
+       return -1;
+    } else {
+       left_has_to_move = false;
+       left_joint_cmd.mode =  baxter_core_msgs::JointCommand::POSITION_MODE;
+       left_joint_cmd.names = srv.response.joints[1].name;
+       left_joint_cmd.command = srv.response.joints[1].position;
+       left_has_to_move = true;
     }
 
     return 0;

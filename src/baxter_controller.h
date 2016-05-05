@@ -35,7 +35,9 @@ public:
     void enable();
 
     // move Baxter's hands to..
+    int moveRightHandTo(double set_pos[]);
     int moveRightHandTo(double set_pos[], double set_ori[]);
+    int moveLeftHandTo(double set_pos[]);
     int moveLeftHandTo(double set_pos[], double set_ori[]);
 
     int right_grip();

@@ -19,5 +19,8 @@ int main(int argc, char **argv)
     SkeletonTracker skeleton_tracker(nh);
     ros::spin();
 
+    // shutdown ROS
+    ros::shutdown();
+
     return 0;
 }

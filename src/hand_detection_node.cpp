@@ -30,6 +30,9 @@ int main(int argc, char **argv)
 #endif
     ros::spin();
 
+    // shutdown ROS
+    ros::shutdown();
+
     return 0;
 }
 
