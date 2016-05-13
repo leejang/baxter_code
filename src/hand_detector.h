@@ -30,6 +30,7 @@ public:
     HandDetector(ros::NodeHandle nh);
     ~HandDetector();
     void doDetection();
+    int parseWindowInputFile();
 
 private:
     ros::NodeHandle nh;
@@ -38,6 +39,7 @@ private:
     ros::Subscriber left_hand_pose_sub;
     ros::Subscriber right_hand_pose_sub;
 
+    // u, v points of each hand
     geometry_msgs::Pose2D left_hand_pose;
     geometry_msgs::Pose2D right_hand_pose;
 
@@ -48,7 +50,7 @@ private:
 
     int initMatlabEngine();
     void generateWindowProposals();
-    int parseWindowInputFile();
+    //int parseWindowInputFile();
 
     void headPoseCB(const geometry_msgs::Pose2D pose);
     void leftHandPoseCB(const geometry_msgs::Pose2D pose);

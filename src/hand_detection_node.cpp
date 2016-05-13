@@ -19,11 +19,11 @@ int main(int argc, char **argv)
     // hand detector node
     HandDetector hand_detector(nh);
 
-#if 0
+#if 1
     // do hand detection
     int start_s = clock();
 
-    hand_detector.doDetection();
+    hand_detector.parseWindowInputFile();
 
     int stop_s = clock();
     std::cout << "time: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000 << std::endl;

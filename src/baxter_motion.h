@@ -1,25 +1,29 @@
 #pragma once
 /*
- * File: mimic_motion.h
+ * File: baxter_motion.h
  * Author: Jangwon lee
  * Email: leejang@indiana.edu
  */
 
-#ifndef MIMIC_MOTION_H_
-#define MIMIC_MOTION_H_
+#ifndef BAXTER_MOTION_H_
+#define BAXTER_MOTION_H_
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include "baxter_controller.h"
 
-class MimicMotion
+class BaxterMotion
 {
 public:
-    MimicMotion(ros::NodeHandle nh);
-    ~MimicMotion();
+    BaxterMotion(ros::NodeHandle nh);
+    ~BaxterMotion();
 
     // handle timer interrupt
-    void onTimerTick(const ros::TimerEvent& e);
+    void mimicOnTimerTick(const ros::TimerEvent& e);
+    void followOnTimerTick(const ros::TimerEvent& e);
+
+    // Baxter Controller
+    BaxterController *baxter_ctrl;
 private:
     ros::NodeHandle nh;
 
@@ -32,8 +36,7 @@ private:
 
     bool tf_exist;
 
-    // Baxter Controller
-    BaxterController *baxter_ctrl;
+    unsigned int mission_cnt;
 
     double set_left_hand_pos[3];
     double set_right_hand_pos[3];

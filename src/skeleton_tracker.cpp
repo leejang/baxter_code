@@ -115,6 +115,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        catch (tf::TransformException & ex)
        {
             //ROS_WARN("%s",ex.what());
+            return;
        }
 
        //ROS_INFO_STREAM(cam_model.tfFrame());
@@ -122,7 +123,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        // Head joint
        head_pt = tf_head.getOrigin();
        // camera frame to open cv coordinate frame
-       cv::Point3d head_cv_pt(-head_pt.y(), -head_pt.z(), head_pt.x());
+       cv::Point3d head_cv_pt(head_pt.x(), head_pt.y(), head_pt.z());
        head_uv = cam_model.project3dToPixel(head_cv_pt);
        head_pose.x = head_uv.x;
        head_pose.y = head_uv.y;
@@ -131,7 +132,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        // Left Hand joint
        left_hand_pt = tf_left_hand.getOrigin();
        // camera frame to open cv coordinate frame
-       cv::Point3d left_hand_cv_pt(-left_hand_pt.y(), -left_hand_pt.z(), left_hand_pt.x());
+       cv::Point3d left_hand_cv_pt(left_hand_pt.x(), left_hand_pt.y(), left_hand_pt.z());
        left_hand_uv = cam_model.project3dToPixel(left_hand_cv_pt);
        left_hand_pose.x = left_hand_uv.x;
        left_hand_pose.y = left_hand_uv.y;
@@ -140,7 +141,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        // Right Hand joint
        right_hand_pt = tf_right_hand.getOrigin();
        // camera frame to open cv coordinate frame
-       cv::Point3d right_hand_cv_pt(-right_hand_pt.y(), -right_hand_pt.z(), right_hand_pt.x());
+       cv::Point3d right_hand_cv_pt(right_hand_pt.x(), right_hand_pt.y(), right_hand_pt.z());
        right_hand_uv = cam_model.project3dToPixel(right_hand_cv_pt);
        right_hand_pose.x = right_hand_uv.x;
        right_hand_pose.y = right_hand_uv.y;
@@ -149,7 +150,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        // Torso joint
        torso_pt = tf_torso.getOrigin();
        // camera frame to open cv coordinate frame
-       cv::Point3d torso_cv_pt(-torso_pt.y(), -torso_pt.z(), torso_pt.x());
+       cv::Point3d torso_cv_pt(torso_pt.x(), torso_pt.y(), torso_pt.z());
        torso_uv = cam_model.project3dToPixel(torso_cv_pt);
        torso_pose.x = torso_uv.x;
        torso_pose.y = torso_uv.y;

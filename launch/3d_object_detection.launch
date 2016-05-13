@@ -13,13 +13,13 @@
     <node name="kinect_viewer" pkg="baxter_learning_from_egocentric_video" type="kinect_viewer">
     </node>
 
-    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.323 0.050 0.405 -0.523 0.389 -0.305 -0.694 /world /camera_link 10" />
+    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.280 0.050 0.230 0.011 0.242 0.006 0.970 /world /camera_link 10" />
 <!--
-    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.323 0.050 0.405 0.586 0.216 -0.155 0.763 /world /camera_link 10" />
+    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.280 0.050 0.230 -0.970 0.002 0.242 0.008 /world /camera_link 10" />
+-->
+<!--
+    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.323 0.050 0.405 -0.523 0.389 -0.305 -0.694 /world /camera_link 10" />
 -->
     <include file="/home/leejang/ros_ws/src/find-object/launch/find_object_3d.launch">
     </include>
-<!--
-    <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.100 -0.072 0.355 -0.790 0.111 0.150 0.584 /world /camera_link 10" />
--->
 </launch>

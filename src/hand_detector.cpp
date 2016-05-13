@@ -38,12 +38,15 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     head_pose_sub = nh.subscribe("skeleton/head_joint_uv", 1, &HandDetector::headPoseCB, this);
     left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint_uv", 1, &HandDetector::leftHandPoseCB, this);
     right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint_uv", 1, &HandDetector::rightHandPoseCB, this);
- 
+
+#if 0
     // Initialize Matlab Engine
     initMatlabEngine();
 
     // generate window proposals
+    // generate at first to prevent Caffe crash
     generateWindowProposals();
+#endif
 
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
@@ -56,10 +59,11 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
+#if 0
     // Caffe Initialize
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
-
+#endif
     head_pose_cnt = 0;
 }
 
@@ -115,17 +119,31 @@ int HandDetector::parseWindowInputFile()
 {
     int retVal = 0;
 
-    FILE * pFile;
+    fstream window_file;
+
+    window_file.open(WINDOW_INPUT_FILE);
+
+    string line;
+
+    while (getline(window_file, line)) {
+        cout << line << endl;
+    }
+
+    window_file.close();
+#if 0
+    FILE *pFile;
 
     pFile = fopen(WINDOW_INPUT_FILE,"r");
 
     if (pFile != NULL) {
 
-        fclose (pFile);
+        // close file handler
+        fclose(pFile);
     } else {
         cerr << "Can't open widnow input file" << endl;
         retVal = -1;
     }
+#endif
 
     cout << "parse done!" << endl;
     return retVal;
@@ -135,9 +153,9 @@ void HandDetector::headPoseCB(const geometry_msgs::Pose2D pose)
 {
 #if DEBUG
     cout << "headPoseCB Count: " << head_pose_cnt << endl;
-#endif
-    doDetection();
     head_pose_cnt++;
+#endif
+    //doDetection();
 }
 
 void HandDetector::leftHandPoseCB(const geometry_msgs::Pose2D pose)

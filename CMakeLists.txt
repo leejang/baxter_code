@@ -112,14 +112,14 @@ set(SKELETON_TRACKER_SOURCE_FILES
 set(SKELETON_TRACKER_HEADER_FILES
   src/skeleton_tracker.h
 )
-# Skeleton tracker
-set(MIMIC_MOTION_SOURCE_FILES
-  src/mimic_motion.cpp
+# Baxter motion (demo code)
+set(BAXTER_MOTION_SOURCE_FILES
+  src/baxter_motion.cpp
   src/baxter_controller.cpp
 )
 
-set(MIMIC_MOTION_HEADER_FILES
-  src/mimic_motion.h
+set(BAXTER_MOTION_HEADER_FILES
+  src/baxter_motion.h
   src/baxter_controller.h
 )
 
@@ -202,11 +202,11 @@ target_link_libraries(skeleton_tracker ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(skeleton_tracker ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(mimic_motion ${MIMIC_MOTION_SOURCE_FILES} ${MIMIC_MOTION_HEADER_FILES})
+add_executable(baxter_motion ${BAXTER_MOTION_SOURCE_FILES} ${BAXTER_MOTION_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(mimic_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(baxter_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
-add_dependencies(mimic_motion ${catkin_EXPORTED_TARGETS})
+add_dependencies(baxter_motion ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
