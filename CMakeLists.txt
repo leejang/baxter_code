@@ -14,6 +14,12 @@ find_package(catkin REQUIRED COMPONENTS
   find_object_2d
   tf
   image_geometry
+  moveit_core
+  moveit_msgs
+  moveit_ros_planning
+  moveit_ros_planning_interface
+  geometry_msgs
+  cmake_modules
 )
 
 ################################################
@@ -62,6 +68,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+
 
 ## Declare a C++ library
 # add_library(baxter_learning_from_egocentric_video
@@ -123,6 +130,17 @@ set(BAXTER_MOTION_HEADER_FILES
   src/baxter_controller.h
 )
 
+# Baxter motion (demo code)
+set(BAXTER_MOVEIT_MOTION_SOURCE_FILES
+  src/baxter_moveit_motion.cpp
+  src/baxter_moveit_controller.cpp
+)
+
+set(BAXTER_MOVEIT_MOTION_HEADER_FILES
+  src/baxter_moveit_motion.h
+  src/baxter_moveit_controller.h
+)
+
 # For OpenCV
 find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -142,13 +160,14 @@ set(MATLAB_LINK_DIR
 )
 
 set(MATLAB_LIBRARIES
-  eng
-  mat
-  mex
-  ut
+  /usr/local/MATLAB/R2015a/bin/glnxa64/libeng.so
+  /usr/local/MATLAB/R2015a/bin/glnxa64/libmat.so
+  /usr/local/MATLAB/R2015a/bin/glnxa64/libmex.so
+  /usr/local/MATLAB/R2015a/bin/glnxa64/libut.so
 )
+
 include_directories(${MATLAB_INCLUDE_DIR})
-link_directories(${MATLAB_LINK_DIR})
+#link_directories(${MATLAB_LINK_DIR})
 
 ##########################################
 # To used skeltrack lib instead of openni_tracker.
@@ -207,6 +226,13 @@ add_executable(baxter_motion ${BAXTER_MOTION_SOURCE_FILES} ${BAXTER_MOTION_HEADE
 target_link_libraries(baxter_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(baxter_motion ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(baxter_moveit_motion ${BAXTER_MOVEIT_MOTION_SOURCE_FILES} ${BAXTER_MOVEIT_MOTION_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(baxter_moveit_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(baxter_moveit_motion ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##

@@ -10,6 +10,7 @@
 using namespace std;
 
 #define DEBUG 1
+//#define CPU_ONLY
 ///////////////////////////////////
 #define GPU_DEVICE_ID 0
 //#define CPU_ONLY

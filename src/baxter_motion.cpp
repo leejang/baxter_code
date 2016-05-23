@@ -146,7 +146,7 @@ int main(int argc, char **argv)
     // mimic motion node
     BaxterMotion baxter_motion(nh);
 
-#if 1
+#if 0
     ROS_INFO("Baxter Motion! (demo)");
     ROS_INFO("Type the number you would like to do");
     ROS_INFO("1: Mimicry human motion");
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     //baxter_motion.baxter_ctrl->moveToNeutral();
     //ros::Duration(1.0).sleep();
 
-#if 1
+#if 0
     if (input == 1) {
         timer = nh.createTimer(ros::Duration(1/CONTROL_FREQ),
                                boost::bind(&BaxterMotion::mimicOnTimerTick, &baxter_motion, _1));
