@@ -9,7 +9,7 @@
 #include <moveit_msgs/CollisionObject.h>
 #include <shape_msgs/SolidPrimitive.h>
 
-#define CONTROL_FREQ 10.0 // Hz
+#define CONTROL_FREQ 30.0 // Hz
 #define DEBUG 0
 
 using namespace std;
@@ -93,10 +93,11 @@ void BaxterMoveitMotion::followHands(void)
         // right Hand
         right_hand_pt = tf_right_hand.getOrigin();
 
-#if 0
         cout << "Left Hand Pt: " << left_hand_pt.x() << ", "
              << left_hand_pt.y() << ", " << left_hand_pt.z() << endl;
 
+#if 0
+        cout << "Left Hand Pt: " << left_hand_pt.x() << ", "
         cout << "Right Hand Pt: " << right_hand_pt.x() << ", "
              << right_hand_pt.y() << ", " << right_hand_pt.z() << endl;
 #endif
@@ -149,7 +150,7 @@ int main(int argc, char **argv)
     shape_msgs::SolidPrimitive table_primitive;
     table_primitive.type = table_primitive.BOX;
     table_primitive.dimensions.resize(3);
-    table_primitive.dimensions[0] = 0.762; // 30 inches
+    table_primitive.dimensions[0] = 0.762; // 30 inches (around 0.762 meter)
     table_primitive.dimensions[1] = 1.524; // 60 inches
     table_primitive.dimensions[2] = 0.762; // 30 inchea
 
@@ -226,9 +227,9 @@ int main(int argc, char **argv)
     double left_approach[] = {-0.1783, 0.0107, -0.8229, 0.4456, -0.1940, 1.012, -0.015};
     baxter_moveit_motion.baxter_moveit_ctrl->moveLeftToJointPositions(left_approach);
 
-    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("left", 5.0);
-    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("right", 5.0);
-    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("both", 5.0);
+    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("left", 3.0);
+    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("right", 3.0);
+    baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("both", 3.0);
 
     while(ros::ok())
     {

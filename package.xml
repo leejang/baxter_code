@@ -49,7 +49,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>find_object_2d</build_depend>
   <build_depend>tf</build_depend>
-  <build_depend>image_geometry</build_depend>
   <build_depend>moveit_core</build_depend>
   <build_depend>moveit_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
@@ -62,7 +61,6 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>find_object_2d</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>image_geomery</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>moveit_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>

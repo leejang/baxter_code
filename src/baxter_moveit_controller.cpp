@@ -124,6 +124,7 @@ int BaxterMoveitController::moveLeftHandTo(geometry_msgs::Point set_point)
     target_pose_left.orientation.w = cur_pose_left.orientation.w;
 
     left_arm_move_group->setPoseTarget(target_pose_left);
+    left_arm_move_group->setGoalTolerance(0.1); // 10 cm
     left_arm_move_group->move();
 
     return 0;
@@ -144,6 +145,7 @@ int BaxterMoveitController::moveLeftHandTo(geometry_msgs::Pose set_pose)
     target_pose_left.orientation.w = set_pose.orientation.w;
 
     left_arm_move_group->setPoseTarget(target_pose_left);
+    left_arm_move_group->setGoalTolerance(0.1); // 10 cm
     left_arm_move_group->move();
 
     return 0;
@@ -164,6 +166,7 @@ int BaxterMoveitController::moveRightHandTo(geometry_msgs::Point set_point)
     target_pose_right.orientation.w = cur_pose_left.orientation.w;
 
     right_arm_move_group->setPoseTarget(target_pose_right);
+    right_arm_move_group->setGoalTolerance(0.01); // 1 cm
     right_arm_move_group->move();
 
     return 0;
@@ -184,6 +187,7 @@ int BaxterMoveitController::moveRightHandTo(geometry_msgs::Pose set_pose)
     target_pose_right.orientation.w = set_pose.orientation.w;
 
     right_arm_move_group->setPoseTarget(target_pose_right);
+    right_arm_move_group->setGoalTolerance(0.01); // 1 cm
     right_arm_move_group->move();
 
     return 0;

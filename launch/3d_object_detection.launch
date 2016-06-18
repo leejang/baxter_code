@@ -8,8 +8,8 @@
     <arg name="rgb_frame_id" value="camera_rgb_optical_frame" />
     <arg name="depth_frame_id" value="camera_depth_optical_frame" />
     </include>
-
 -->
+
     <node name="kinect_viewer" pkg="baxter_learning_from_egocentric_video" type="kinect_viewer">
     </node>
 
