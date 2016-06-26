@@ -141,6 +141,16 @@ set(BAXTER_MOVEIT_MOTION_HEADER_FILES
   src/baxter_moveit_controller.h
 )
 
+# Training
+set(TRAIN_SOURCE_FILES
+  src/train_representation.cpp
+  src/train_representation_node.cpp
+)
+
+set(TRAIN_HEADER_FILES
+  src/train_representation.h
+)
+
 # For OpenCV
 find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -234,6 +244,12 @@ target_link_libraries(baxter_moveit_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 ## Add cmake target dependencies of the executable/library
 add_dependencies(baxter_moveit_motion ${catkin_EXPORTED_TARGETS})
 
+## Declare a C++ executable
+add_executable(train_representation ${TRAIN_SOURCE_FILES} ${TRAIN_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(train_representation ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(train_representation ${catkin_EXPORTED_TARGETS})
 #############
 ## Install ##
 #############
