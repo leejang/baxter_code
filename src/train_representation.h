@@ -10,6 +10,7 @@
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 
@@ -26,8 +27,14 @@ private:
     image_transport::ImageTransport *it;
     image_transport::Publisher image_pub;
 
+    ros::Subscriber detected_sub;
+
     // to open video file
     cv::VideoCapture capture_video;
+
+    // callback functions
+    void objectsDetectedCallback(const std_msgs::Float32MultiArray & msg);
+
 };
 
 #endif

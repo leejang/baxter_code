@@ -15,6 +15,8 @@ TrainRepresentation::TrainRepresentation(ros::NodeHandle nh)
 
     it = new image_transport::ImageTransport(nh);
     image_pub = it->advertise("train/image", 1);
+
+    detected_sub = nh.subscribe("objects", 1, &TrainRepresentation::objectsDetectedCallback, this);
 }
 
 TrainRepresentation::~TrainRepresentation()
@@ -25,71 +27,21 @@ TrainRepresentation::~TrainRepresentation()
 
 int TrainRepresentation::doTraining()
 {
-    cv_bridge::CvImage out_msg;
-    std_msgs::Header img_header;
-
-    // open video file
-    string videoFile = "/home/leejang/data/recorded_videos_on_0603_2016/scenario3/0311.mp4"; 
-    capture_video.open(videoFile);
-    cv::Mat frame;
-
-#if 0
-    // read image file
-    string imageFile = "/home/leejang/data/recorded_videos_on_0603_2016/water_cup.jpg";
-    frame = cv::imread(imageFile, CV_LOAD_IMAGE_COLOR);
-    //cv::namedWindow("Play recorded video", 1);
-#endif
-
-    if (!capture_video.isOpened())
-        ROS_ERROR("!!! Error when opening video file");
-    else
-        //cv::namedWindow("Play recorded video", 1);
-
-    while(1) {
-        capture_video >> frame;
-        if (frame.empty()) {
-            cout << "done!!" << endl;
-            break;
-        } else {
-            //cv::imshow("Play recorded video", frame);
-            //cv::waitKey(0);
-            // to check image encoding
-            //C1	C2	C3	C4
-            //CV_8U	0	8	16	24
-            //CV_8S	1	9	17	25
-            //CV_16U	2	10	18	26
-            //CV_16S	3	11	19	27
-            //CV_32S	4	12	20	28
-            //CV_32F	5	13	21	29
-            //CV_64F	6	14	22	30
-            //cout << frame.type();
-#if 0
-            printf( "CV_CAP_PROP_POS_MSEC:   %ld \n", (long) capture_video.get( CV_CAP_PROP_POS_MSEC) ); 
-            printf( "CV_CAP_PROP_POS_FRAMES:  %ld \n", (long) capture_video.get( CV_CAP_PROP_POS_FRAMES) );
-            printf( "CV_CAP_PROP_FPS:  %f\n", capture_video.get( CV_CAP_PROP_FPS));
-#endif
-#if 0
-            char filename[80];
-            static int cnt = 0;
-            sprintf(filename, "test_%d.jpg", cnt);
-            imwrite(filename, frame);
-            cnt++;
-            cout << cnt << endl;
-#endif
-            // Output video stream as ROS sensor image format
-            // sensor image header
-            img_header.seq = (double)capture_video.get(CV_CAP_PROP_POS_FRAMES);
-            img_header.stamp = ros::Time::now(); 
-
-            out_msg.header = img_header;
-            out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-            out_msg.image = frame;
-            // publish
-            image_pub.publish(out_msg.toImageMsg());
-        }
-    }
-
-    // release video handler
-    capture_video.release();
     return 0;
 }
+
+void TrainRepresentation::objectsDetectedCallback(const std_msgs::Float32MultiArray & msg)
+{
+    if (msg.data.size()) {
+        for (unsigned int i=0; i<msg.data.size(); i+=12) {
+
+            // get data
+            int id = (int)msg.data[i];
+            float objectWidth = msg.data[i+1];
+            float objectHeight = msg.data[i+2];
+
+            cout << "object detected!" << endl;
+        }
+    }
+}
+

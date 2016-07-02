@@ -250,6 +250,14 @@ add_executable(train_representation ${TRAIN_SOURCE_FILES} ${TRAIN_HEADER_FILES})
 target_link_libraries(train_representation ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(train_representation ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(publish_train_images src/publish_train_images_node.cpp)
+## Specify libraries to link a library or executable target against
+target_link_libraries(publish_train_images ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(publish_train_images ${catkin_EXPORTED_TARGETS})
+
 #############
 ## Install ##
 #############
