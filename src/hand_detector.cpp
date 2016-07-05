@@ -12,7 +12,7 @@ using namespace std;
 #define DEBUG 1
 //#define CPU_ONLY
 ///////////////////////////////////
-#define GPU_DEVICE_ID 0
+#define GPU_DEVICE_ID 2
 //#define CPU_ONLY
 #define MODEL_PATH "/home/leejang/data/caffe_models/hand_type_classifier.prototxt"
 #define WEIGHTS_PATH "/home/leejang/data/caffe_models/hand_type_classifier.caffemodel"
@@ -40,14 +40,19 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     left_hand_pose_sub = nh.subscribe("skeleton/left_hand_joint_uv", 1, &HandDetector::leftHandPoseCB, this);
     right_hand_pose_sub = nh.subscribe("skeleton/right_hand_joint_uv", 1, &HandDetector::rightHandPoseCB, this);
 
-#if 0
+    // subscriber to get each training image
+    it_train = new image_transport::ImageTransport(nh);
+    img_sub_train = it_train->subscribe("train/image", 1, &HandDetector::trainCB, this);
+
+    // publishcer to send detection completed message
+    detected_pub = nh.advertise<std_msgs::UInt64>("hand_detector/done", 1);
+
     // Initialize Matlab Engine
     initMatlabEngine();
 
     // generate window proposals
     // generate at first to prevent Caffe crash
     generateWindowProposals();
-#endif
 
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
@@ -60,12 +65,14 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     string model_path = MODEL_PATH;
     string weights_path = WEIGHTS_PATH;
 
-#if 0
     // Caffe Initialize
     caffe_net = new Net<float>(model_path, caffe::TEST);
     caffe_net->CopyTrainedLayersFrom(weights_path);
-#endif
+
     head_pose_cnt = 0;
+    completed_frame_cnt.data = 0;
+
+    cout << "Initialization done!" <<endl;
 }
 
 HandDetector::~HandDetector()
@@ -75,6 +82,8 @@ HandDetector::~HandDetector()
 
     if (matlab_ep != NULL)
         engClose(matlab_ep);
+
+    delete it_train;
 }
 
 int HandDetector::initMatlabEngine()
@@ -181,17 +190,28 @@ void HandDetector::rightHandPoseCB(const geometry_msgs::Pose2D pose)
 #endif
 }
 
+void HandDetector::trainCB(const sensor_msgs::ImageConstPtr &msg)
+{
+    cout << "trainCB" << endl;
+
+    doDetection();
+    completed_frame_cnt.data++;
+    detected_pub.publish(completed_frame_cnt);
+}
+
 void HandDetector::doDetection()
 {
+    cout << "do detection" << endl;
+
     // generate window proposals
     generateWindowProposals();
 
     // parse generated window input file
-    parseWindowInputFile();
+    // to reduce number of window proposals in future..
+    // parseWindowInputFile();
 
-    cout << "hand detection done!" << endl;
+    //cout << "hand detection done!" << endl;
 
-#if 0
     const vector<shared_ptr<Layer<float> > >& layers = caffe_net->layers();
 
 #if 0
@@ -232,7 +252,7 @@ void HandDetector::doDetection()
         //cout << result[1]->count() << endl;
         for (int j = 0; j < result[1]->count(); ++j) {
             const float score = result_vec[j];
-            //cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
+            // cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
             // my left hand
             if (window_cnt % 5 == 1 && score > 0.9)
                 cout << "[My left hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
@@ -249,5 +269,4 @@ void HandDetector::doDetection()
             window_cnt++;
         }
     }
-#endif
 }

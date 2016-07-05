@@ -231,7 +231,7 @@ int main(int argc, char **argv)
     baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("right", 3.0);
     baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("both", 3.0);
 
-    while(ros::ok())
+    while (ros::ok())
     {
        baxter_moveit_motion.followHands();
 

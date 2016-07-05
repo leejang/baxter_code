@@ -8,6 +8,7 @@
 #ifndef TRAIN_REPRESENTATION_H_
 #define TRAIN_REPRESENTATION_H_
 
+#include <fstream>
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <std_msgs/Float32MultiArray.h>
@@ -24,14 +25,10 @@ public:
 
 private:
     ros::NodeHandle nh;
-    image_transport::ImageTransport *it;
-    image_transport::Publisher image_pub;
-
     ros::Subscriber detected_sub;
 
-    // to open video file
-    cv::VideoCapture capture_video;
-
+    std::ofstream detection_result;
+    unsigned int frame_cnt;
     // callback functions
     void objectsDetectedCallback(const std_msgs::Float32MultiArray & msg);
 
