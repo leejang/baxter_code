@@ -19,7 +19,10 @@ using namespace std;
 // MATLAB Implemented Window Proposals
 #define MATLAB_PATH ":/usr/local/MATLAB/R2015a/bin:/usr/local/MATLAB/R2015a/sys/os"
 #define ADD_MATLAB_FUNCTION_DIR "addpath('/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals');"
-#define WINDOW_INPUT_FILE "/home/leejang/data/hands/current_windows.txt"
+//#define WINDOW_INPUT_FILE "/home/leejang/data/hands/current_windows.txt"
+#define WINDOW_INPUT_FILE "/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0212/all_windows.txt"
+#define HAND_CNN_OUTPUT "/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0212/hand_cnn_output.txt"
+#define NUM_OF_FRAME 622
 ///////////////////////////////////
 
 std::fstream& GotoLine(std::fstream& file, unsigned int num)
@@ -48,11 +51,11 @@ HandDetector::HandDetector(ros::NodeHandle nh)
     detected_pub = nh.advertise<std_msgs::UInt64>("hand_detector/done", 1);
 
     // Initialize Matlab Engine
-    initMatlabEngine();
+    //initMatlabEngine();
 
     // generate window proposals
     // generate at first to prevent Caffe crash
-    generateWindowProposals();
+    //generateWindowProposals();
 
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
@@ -203,8 +206,11 @@ void HandDetector::doDetection()
 {
     cout << "do detection" << endl;
 
+    std::ofstream cnn_output;
+    cnn_output.open(HAND_CNN_OUTPUT);
+
     // generate window proposals
-    generateWindowProposals();
+    //generateWindowProposals();
 
     // parse generated window input file
     // to reduce number of window proposals in future..
@@ -227,15 +233,19 @@ void HandDetector::doDetection()
     GotoLine(infile,6);
     unsigned int num_windows = 0;
     infile >> num_windows;
-    //cout << "num_windows: " << num_windows << endl;
+    cout << "num_windows: " << num_windows << endl;
     infile.close();
+
+    unsigned int num_frames = NUM_OF_FRAME;
+    cout << "num_frames: " << num_frames << endl;
 
     // Get batch_size
     const int batch_size = layers[0]->layer_param().window_data_param().batch_size();
-    //cout << "batch_size: " << batch_size << endl;
+    cout << "batch_size: " << batch_size << endl;
 
-    unsigned int num_iterations = (num_windows / batch_size) + 1;
-    //cout << "num_iterations: " << num_iterations << endl;
+    //unsigned int num_iterations = (num_windows / batch_size) + 1;
+    unsigned int num_iterations = (num_windows * num_frames / batch_size) + 1;
+    cout << "num_iterations: " << num_iterations << endl;
 
     float loss = 0;
 
@@ -248,11 +258,22 @@ void HandDetector::doDetection()
 
         const float* result_vec = result[1]->cpu_data();
 
+        cout << "Frame number: " << i/8 << endl;
+
         // number of windows in each batch_size
         //cout << result[1]->count() << endl;
         for (int j = 0; j < result[1]->count(); ++j) {
             const float score = result_vec[j];
-            // cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
+            //cout << " window num: [" << window_cnt << "]" << " score: " << score << endl;
+
+            if (window_cnt % 5 == 0)
+                cnn_output << window_cnt/5 << "\t" << score << " ";
+            else if (window_cnt % 5 == 4)
+	        cnn_output << score << endl;
+            else
+                cnn_output << score << " ";
+
+#if 0
             // my left hand
             if (window_cnt % 5 == 1 && score > 0.9)
                 cout << "[My left hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
@@ -265,8 +286,10 @@ void HandDetector::doDetection()
             // your right hand
             if (window_cnt % 5 == 4 && score > 0.9)
                 cout << "[Your right hand detected] window num: [" << window_cnt << "]" << " score: " << score << endl;
-
+#endif
             window_cnt++;
         }
     }
+
+    cnn_output.close();
 }

@@ -15,6 +15,7 @@ TrainRepresentation::TrainRepresentation(ros::NodeHandle nh)
 {
     this->nh = nh;
 
+    frame_cnt_sub = nh.subscribe("frame_cnt", 1, &TrainRepresentation::frameCountCallback, this);
     detected_sub = nh.subscribe("objects", 1, &TrainRepresentation::objectsDetectedCallback, this);
     detection_result.open(DETECTION_RESULT);
     frame_cnt = 0;
@@ -30,6 +31,12 @@ TrainRepresentation::~TrainRepresentation()
 int TrainRepresentation::doTraining()
 {
     return 0;
+}
+
+void TrainRepresentation::frameCountCallback(const std_msgs::UInt64::ConstPtr& msg)
+{
+    frame_cnt = msg->data;
+    //cout << "frame_cnt: " << frame_cnt << endl;
 }
 
 void TrainRepresentation::objectsDetectedCallback(const std_msgs::Float32MultiArray & msg)

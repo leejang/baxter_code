@@ -11,6 +11,7 @@
 #include <fstream>
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
+#include <std_msgs/UInt64.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
@@ -26,10 +27,13 @@ public:
 private:
     ros::NodeHandle nh;
     ros::Subscriber detected_sub;
+    ros::Subscriber frame_cnt_sub;
 
     std::ofstream detection_result;
     unsigned int frame_cnt;
+
     // callback functions
+    void frameCountCallback(const std_msgs::UInt64::ConstPtr& msg);
     void objectsDetectedCallback(const std_msgs::Float32MultiArray & msg);
 
 };

@@ -19,6 +19,9 @@ using namespace std;
 // global flag to publish each frame after all recognition processing has been completed
 bool has_to_publish = false;
 
+// frame count
+std_msgs::UInt64 frame_cnt;
+
 void handDetectionCB(const std_msgs::UInt64::ConstPtr& msg)
 {
     ROS_INFO("I heard frame: [%lu]", msg->data);
@@ -42,8 +45,11 @@ int main(int argc, char **argv)
 
     ROS_INFO("publish training images");
 
+    // subscribers
     ros::Subscriber hand_sub = nh.subscribe("hand_detector/done", 1, handDetectionCB);
     ros::Subscriber obj_sub = nh.subscribe("objects", 1, objDetectionCB);
+    // publishers
+    ros::Publisher frame_cnt_pub = nh.advertise<std_msgs::UInt64>("frame_cnt", 1);
     image_pub = it.advertise("train/image", 1);
 
     // to open video file
@@ -58,9 +64,15 @@ int main(int argc, char **argv)
     //cv::namedWindow("Play recorded video", 1);
 
     // open video file
-    string videoFile = "/home/leejang/data/recorded_videos_on_0603_2016/scenario3/0311.mp4";
+    string videoFile = "/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0201.mp4";
     capture_video.open(videoFile);
     cv::Mat frame;
+
+    // initialize frame count
+    frame_cnt.data = 0;
+
+    // waiting count
+    unsigned int waiting_cnt = 0;
 
     if (!capture_video.isOpened()) {
         ROS_ERROR("!!! Error when opening video file");
@@ -73,7 +85,15 @@ int main(int argc, char **argv)
         while (ros::ok()) {
 
             if (!has_to_publish) {
-                //cout << "I'm waiting.." << endl;
+                //cout << "I'm waiting.. [" << waiting_cnt << "]" << endl;
+
+                // waiting around 5 sec (in case of use 10 hz loop rate)
+                if (waiting_cnt >= 50) {
+                    waiting_cnt = 0;
+                    has_to_publish = true;
+                } else {
+                    waiting_cnt++;
+                }
             } else {
                 // read each video frame
                 capture_video >> frame;
@@ -100,13 +120,11 @@ int main(int argc, char **argv)
                     printf( "CV_CAP_PROP_FPS:  %f\n", capture_video.get( CV_CAP_PROP_FPS));
 #endif
                     char filename[80];
-                    static int cnt = 0;
-                    sprintf(filename, "frame_%d.jpg", cnt);
+                    sprintf(filename, "frame_%lu.jpg", frame_cnt.data);
                     imwrite(filename, frame);
                     // for hand detector (saving current frame (overwrite))
                     imwrite(SAVED_IMG, frame);
-                    cout << cnt << endl;
-                    cnt++;
+                    cout << frame_cnt.data << endl;
 
                     // Output video stream as ROS sensor image format
                     // sensor image header
@@ -120,7 +138,9 @@ int main(int argc, char **argv)
                     // publish
                     //ros::Duration(5).sleep();
                     image_pub.publish(out_msg.toImageMsg());
+                    frame_cnt_pub.publish(frame_cnt);
                     has_to_publish = false;
+                    frame_cnt.data++;
                 }
             } // else
 

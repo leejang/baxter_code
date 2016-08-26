@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-#if 0
+#if 1
     // do hand detection
     int start_s = clock();
 
