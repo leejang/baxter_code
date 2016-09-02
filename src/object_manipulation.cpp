@@ -127,7 +127,7 @@ int main(int argc, char **argv)
         //cin >> set_right_ori[i];
     }
 
-    controller->moveRightHandTo(set_right_pos, set_right_ori);
+    //controller->moveRightHandTo(set_right_pos, set_right_ori);
 #endif
 
     while (test) {

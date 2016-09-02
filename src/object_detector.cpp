@@ -45,9 +45,9 @@ void ObjectDetector::objectsDetectedCallback(const find_object_2d::ObjectsStampe
 
             try
             {
-                // Get transformation from "object_#" frame to target frame "world"
+                // Get transformation from "object_#" frame to target frame "torso"
                 // The timestamp matches the one sent over TF
-                tfListener_.lookupTransform("/world", objectFrameId, msg->header.stamp, pose);
+                tfListener_.lookupTransform("/torso", objectFrameId, msg->header.stamp, pose);
                 tfListener_.lookupTransform(msg->header.frame_id, objectFrameId, msg->header.stamp, poseCam);
             }
             catch (tf::TransformException & ex)
@@ -56,9 +56,11 @@ void ObjectDetector::objectsDetectedCallback(const find_object_2d::ObjectsStampe
                 continue;
             }
 
-            // Here "pose" is the position of the object "id" in "/map" frame.
+            cout << "Test: " << msg->header.frame_id.c_str() << endl;
+
+            // Here "pose" is the position of the object "id" in "/torso" frame.
             ROS_INFO("Object_%d [x,y,z] [x,y,z,w] in \"%s\" frame: [%f,%f,%f] [%f,%f,%f,%f]",
-                        id, "/world",
+                        id, "/torso",
                         pose.getOrigin().x(), pose.getOrigin().y(), pose.getOrigin().z(),
                         pose.getRotation().x(), pose.getRotation().y(), pose.getRotation().z(), pose.getRotation().w());
 #if 0

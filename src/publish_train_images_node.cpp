@@ -58,15 +58,15 @@ int main(int argc, char **argv)
     cv_bridge::CvImage out_msg;
     std_msgs::Header img_header;
 
-    // read image file
-    //string imageFile = "/home/leejang/data/recorded_videos_on_0603_2016/water_cup.jpg";
-    //frame = cv::imread(imageFile, CV_LOAD_IMAGE_COLOR);
-    //cv::namedWindow("Play recorded video", 1);
-
     // open video file
-    string videoFile = "/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0201.mp4";
+    string videoFile = "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/0101.avi";
     capture_video.open(videoFile);
     cv::Mat frame;
+
+    // read image file
+    //string imageFile = "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/box.jpg";
+    //frame = cv::imread(imageFile, CV_LOAD_IMAGE_COLOR);
+    //cv::namedWindow("Play recorded video", 1);
 
     // initialize frame count
     frame_cnt.data = 0;

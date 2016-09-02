@@ -34,8 +34,8 @@ void BaxterMoveitMotion::onTimerTick(const ros::TimerEvent& e)
     try {
         // tfansform each body position to camera frame
         // get the transform from torso frame to each hand frame
-        tfListener.lookupTransform("/base", "/left_hand_1", ros::Time(0), tf_left_hand);
-        tfListener.lookupTransform("/base", "/right_hand_1", ros::Time(0), tf_right_hand);
+        tfListener.lookupTransform("/torso", "/left_hand_1", ros::Time(0), tf_left_hand);
+        tfListener.lookupTransform("/torso", "/right_hand_1", ros::Time(0), tf_right_hand);
         tf_exist = true;
     }
     catch (tf::TransformException & ex)
@@ -76,8 +76,8 @@ void BaxterMoveitMotion::followHands(void)
     try {
         // tfansform each body position to camera frame
         // get the transform from torso frame to each hand frame
-        tfListener.lookupTransform("/base", "/left_hand_1", ros::Time(0), tf_left_hand);
-        tfListener.lookupTransform("/base", "/right_hand_1", ros::Time(0), tf_right_hand);
+        tfListener.lookupTransform("/torso", "/left_hand_1", ros::Time(0), tf_left_hand);
+        tfListener.lookupTransform("/torso", "/right_hand_1", ros::Time(0), tf_right_hand);
         tf_exist = true;
     }
     catch (tf::TransformException & ex)
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     // adding objects into the environment
     // object1: table
     moveit_msgs::CollisionObject table;
-    table.header.frame_id = "/base";
+    table.header.frame_id = "/torso";
 
     /* The id of the object is used to identify it. */
     table.id = "table";
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
     table_primitive.dimensions.resize(3);
     table_primitive.dimensions[0] = 0.762; // 30 inches (around 0.762 meter)
     table_primitive.dimensions[1] = 1.524; // 60 inches
-    table_primitive.dimensions[2] = 0.762; // 30 inchea
+    table_primitive.dimensions[2] = 0.991; // 39 inchea
 
     /* A pose for the box (specified relative to frame_id) */
     geometry_msgs::Pose table_pose;
@@ -166,9 +166,10 @@ int main(int argc, char **argv)
     table.operation = table.ADD; 
     baxter_moveit_motion.baxter_moveit_ctrl->addObjectIntoWorld(table);
 
+#if 0
     // object2: Kinect sensor
     moveit_msgs::CollisionObject kinect;
-    kinect.header.frame_id = "/base";
+    kinect.header.frame_id = "/torso";
 
     /* The id of the object is used to identify it. */
     kinect.id = "kinect";
@@ -192,6 +193,7 @@ int main(int argc, char **argv)
     kinect.primitive_poses.push_back(kinect_pose);
     kinect.operation = kinect.ADD; 
     baxter_moveit_motion.baxter_moveit_ctrl->addObjectIntoWorld(kinect);
+#endif
 
 #if 0
     // test for moving each arm
@@ -224,7 +226,7 @@ int main(int argc, char **argv)
     baxter_moveit_motion.baxter_moveit_ctrl->moveRightHandTo(baxter_moveit_motion.target_pose_right);
 #endif
 
-    double left_approach[] = {-0.1783, 0.0107, -0.8229, 0.4456, -0.1940, 1.012, -0.015};
+    double left_approach[] = {-0.260, -0.049, -0.635, -0.251, 0.230, 1.775, 0.240};
     baxter_moveit_motion.baxter_moveit_ctrl->moveLeftToJointPositions(left_approach);
 
     baxter_moveit_motion.baxter_moveit_ctrl->setPlanningTime("left", 3.0);
@@ -243,7 +245,7 @@ int main(int argc, char **argv)
 
     // removing objects from the environment
     baxter_moveit_motion.baxter_moveit_ctrl->removeObjectFromWorld("table");
-    baxter_moveit_motion.baxter_moveit_ctrl->removeObjectFromWorld("kinect");
+    //baxter_moveit_motion.baxter_moveit_ctrl->removeObjectFromWorld("kinect");
 
     spinner.stop();
 

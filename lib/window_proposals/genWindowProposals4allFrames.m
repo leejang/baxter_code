@@ -1,12 +1,12 @@
 %function proposals = genWindowProposals(img_path, output_file_path, num_windows)
-function proposals = genWindowProposals(num_windows, phase)
+function proposals = genWindowProposals4allFrames(num_windows, phase)
 
 %img_path = '/home/leejang/data/hands/current_frame.jpg';
 %output_file_path = '/home/leejang/data/hands/current_windows.txt';
 
-input_path = '/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0201/';
-input_files = '/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0201/*.jpg';
-output_file_path = '/home/leejang/data/recorded_videos_on_0603_2016/scenario2/0201/all_windows.txt';
+input_path = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/';
+input_files = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/*.jpg';
+output_file_path = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/all_windows.txt';
 
 %proposals = num_windows + 1;
 
