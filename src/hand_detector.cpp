@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define DEBUG 1
+#define DEBUG 2
 //#define CPU_ONLY
 ///////////////////////////////////
 #define GPU_DEVICE_ID 2
@@ -20,9 +20,9 @@ using namespace std;
 #define MATLAB_PATH ":/usr/local/MATLAB/R2015a/bin:/usr/local/MATLAB/R2015a/sys/os"
 #define ADD_MATLAB_FUNCTION_DIR "addpath('/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/lib/window_proposals');"
 //#define WINDOW_INPUT_FILE "/home/leejang/data/hands/current_windows.txt"
-#define WINDOW_INPUT_FILE "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/0105/all_windows.txt"
-#define HAND_CNN_OUTPUT "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/0105/hand_cnn_output.txt"
-#define NUM_OF_FRAME 182
+#define WINDOW_INPUT_FILE "/home/leejang/data/recorded_videos_on_0920_2016/scenario1/0112/all_windows.txt"
+#define HAND_CNN_OUTPUT "/home/leejang/data/recorded_videos_on_0920_2016/scenario1/0112/hand_cnn_output.txt"
+#define NUM_OF_FRAME 235
 ///////////////////////////////////
 
 std::fstream& GotoLine(std::fstream& file, unsigned int num)

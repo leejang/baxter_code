@@ -4,15 +4,16 @@ function proposals = genWindowProposals4allFrames(num_windows, phase)
 %img_path = '/home/leejang/data/hands/current_frame.jpg';
 %output_file_path = '/home/leejang/data/hands/current_windows.txt';
 
-input_path = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/';
-input_files = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/*.jpg';
-output_file_path = '/home/leejang/data/recorded_videos_on_0830_2016/scenario2/0204/all_windows.txt';
+input_path = '/home/leejang/data/recorded_videos_on_0920_2016/scenario1/0111/';
+input_files = '/home/leejang/data/recorded_videos_on_0920_2016/scenario1/0111/*.jpg';
+output_file_path = '/home/leejang/data/recorded_videos_on_0920_2016/scenario1/0111/all_windows.txt';
 
 %proposals = num_windows + 1;
 
 % add KDE package
 addpath(genpath('kde'));
 
+% do not use 'test' mode for this research
 if strcmp(phase, 'test')
   % load skin and KDE models
   load('box_proposal_model_test.mat', 'model');

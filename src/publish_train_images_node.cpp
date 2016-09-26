@@ -59,12 +59,12 @@ int main(int argc, char **argv)
     std_msgs::Header img_header;
 
     // open video file
-    string videoFile = "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/0101.avi";
+    string videoFile = "/home/leejang/data/recorded_videos_on_0920_2016/scenario1/090720_0111.avi";
     capture_video.open(videoFile);
     cv::Mat frame;
 
     // read image file
-    //string imageFile = "/home/leejang/data/recorded_videos_on_0830_2016/scenario1/box.jpg";
+    //string imageFile = "/home/leejang/data/recorded_videos_on_0907_2016/coffee2.jpg";
     //frame = cv::imread(imageFile, CV_LOAD_IMAGE_COLOR);
     //cv::namedWindow("Play recorded video", 1);
 
