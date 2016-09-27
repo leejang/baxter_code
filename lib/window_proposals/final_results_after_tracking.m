@@ -360,7 +360,8 @@ function [] = final_results_after_tracking()
 
 
         data_disk(:,:,1,f) = raw_pos;
-        label_disk(:,:,1,f) = raw_pos;
+        label_disk(1:10,f) = raw_pos(:,1);
+        label_disk(11:20,f) = raw_pos(:,2);
 
         %disp(ref_pos);
         % write frame with annotation
@@ -384,13 +385,13 @@ function [] = final_results_after_tracking()
         %batchdata = data_disk(:,:,1,last_read+1:last_read+chunksz);
         %batchlabs = label_disk(:,:,1,last_read+1:last_read+chunksz);
         batchdata = data_disk(:,:,1,last_read+1:last_read+chunksz);
-        batchlabs = label_disk(:,:,1,last_read+31:last_read+chunksz+30);
+        batchlabs = label_disk(:,last_read+31:last_read+chunksz+30);
     
         % normalize
-        batchdata(:,1,1,:) = (batchdata(:,1,1,:) + img_size(1)) / (img_size(1) + img_size(1)); % 1280 * 2
-        batchdata(:,2,1,:) = (batchdata(:,2,1,:) + img_size(2)) / (img_size(2) + img_size(2)); % 720 * 2
-        batchlabs(:,1,1,:) = (batchlabs(:,1,1,:) + img_size(1)) / (img_size(1) + img_size(1)); % 1280 * 2
-        batchlabs(:,2,1,:) = (batchlabs(:,2,1,:) + img_size(2)) / (img_size(2) + img_size(2)); % 720 * 2
+        batchdata(:,1,1,:) = (batchdata(:,1,1,:) + img_size(1)) / (img_size(1) + img_size(1)); % 1280 * 2 (x)
+        batchdata(:,2,1,:) = (batchdata(:,2,1,:) + img_size(2)) / (img_size(2) + img_size(2)); % 720 * 2 (y)
+        batchlabs(1:10,:) = (batchlabs(1:10,:) + img_size(1)) / (img_size(1) + img_size(1)); % 1280 * 2 (x)
+        batchlabs(11:20,:) = (batchlabs(11:20,:) + img_size(2)) / (img_size(2) + img_size(2)); % 720 * 2 (y)
 
         % to set all NaN to zero
         batchdata(isnan(batchdata)) = 0.0;        
@@ -399,7 +400,7 @@ function [] = final_results_after_tracking()
         %disp(batchdata);
 
         % store to hdf5
-        startloc = struct('dat',[1,1,1,totalct + 1], 'lab', [1,1,1,totalct + 1]);
+        startloc = struct('dat',[1,1,1,totalct + 1], 'lab', [1,totalct + 1]);
         curr_dat_sz = store2hdf5(new_hdf5, batchdata, batchlabs, ~created_flag, startloc, chunksz); 
         created_flag = true;% flag set so that file is created only once
         totalct = curr_dat_sz(end);% updated dataset size (#samples)
