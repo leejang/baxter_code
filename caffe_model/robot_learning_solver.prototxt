@@ -1,0 +1,12 @@
+net: "/home/leejang/data/recorded_videos_on_0920_2016/robot_learning.prototxt"
+base_lr: 0.01
+lr_policy: "fixed"
+weight_decay: 0.01
+stepsize: 300
+gamma: 0.1  
+display: 100
+max_iter: 10000
+momentum: 0.9
+snapshot: 1000
+snapshot_prefix: "/home/leejang/data/recorded_videos_on_0920_2016/tmp"
+solver_mode: GPU
