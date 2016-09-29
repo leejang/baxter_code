@@ -151,6 +151,16 @@ set(TRAIN_HEADER_FILES
   src/train_representation.h
 )
 
+# Test: future prediction
+set(FUTURE_PREDICTION_SOURCE_FILES
+  src/future_prediction.cpp
+  src/future_prediction_node.cpp
+)
+
+set(FUTURE_PREDICTION_HEADER_FILES
+  src/future_prediction.h
+)
+
 # For OpenCV
 find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -250,6 +260,13 @@ add_executable(train_representation ${TRAIN_SOURCE_FILES} ${TRAIN_HEADER_FILES})
 target_link_libraries(train_representation ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(train_representation ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(future_prediction ${FUTURE_PREDICTION_SOURCE_FILES} ${FUTURE_PREDICTION_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(future_prediction ${catkin_LIBRARIES} ${Caffe_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(future_prediction ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(publish_train_images src/publish_train_images_node.cpp)

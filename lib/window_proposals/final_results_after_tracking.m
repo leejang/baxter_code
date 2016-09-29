@@ -1,17 +1,17 @@
 function [] = final_results_after_tracking()
 
     % name of new video to create
-    new_video = '092016_0201_final.avi';
-    new_hdf5 = '092016_0201.h5';
+    new_video = '092016_0214_final.avi';
+    new_hdf5 = '092016_0214.h5';
 
     % threshold for active points
 % for scenario 2
     table_thr = 30;
-    my_left_thr = 85;
-    my_right_thr = 25;
+    my_left_thr = 15;
+    my_right_thr = 15;
     other_left_thr = Inf;
     %other_left_thr = 100;
-    other_right_thr = 70;
+    other_right_thr = 20;
 
     pan_thr = 15;
     trivet_thr = 15;
@@ -45,10 +45,12 @@ function [] = final_results_after_tracking()
     table_m = csvread(table_fname);
     % variable 1
     my_left_m = csvread(my_left_fname);
-    bk_my_left_m = csvread(bk_my_left_fname);
+    %bk_my_left_m = csvread(bk_my_left_fname);
+    bk_my_left_m = zeros(size(table_m));
     % variable 2
     my_right_m = csvread(my_right_fname);
-    bk_my_right_m = csvread(bk_my_right_fname);
+    bk_my_right_m = zeros(size(table_m));
+    %bk_my_right_m = csvread(bk_my_right_fname);
     % variable 3
     other_left_m = zeros(size(table_m));
     bk_other_left_m = zeros(size(table_m));
@@ -374,18 +376,26 @@ function [] = final_results_after_tracking()
     %disp(img_size);
 
     % to save hdf5 file
-    chunksz = (num_of_frames - 30);
+    chunksz = (num_of_frames - 35);
     created_flag = false;
     totalct = 0;
-    for batchno = 1:(num_of_frames - 30)/chunksz
+    for batchno = 1:(num_of_frames - 35)/chunksz
         fprintf('batch no. %d\n', batchno);
         last_read = (batchno-1)*chunksz;
 
         % to simulate maximum data to be held in memory before dumping to hdf5 file
         %batchdata = data_disk(:,:,1,last_read+1:last_read+chunksz);
         %batchlabs = label_disk(:,:,1,last_read+1:last_read+chunksz);
-        batchdata = data_disk(:,:,1,last_read+1:last_read+chunksz);
-        batchlabs = label_disk(:,last_read+31:last_read+chunksz+30);
+        %batchdata = data_disk(:,:,1,last_read+1:last_read+chunksz);
+
+        % concatenate 10 frames
+        for frame = 1:(num_of_frames - 35)
+            for idx = 0:9
+                batchdata(1+idx*10:10+idx*10,:,1,frame) = data_disk(:,:,1,frame + idx);
+            end
+        end
+
+        batchlabs = label_disk(:,last_read+36:last_read+chunksz+35);
     
         % normalize
         batchdata(:,1,1,:) = (batchdata(:,1,1,:) + img_size(1)) / (img_size(1) + img_size(1)); % 1280 * 2 (x)
