@@ -7,7 +7,7 @@ function [] = final_results_after_tracking()
     % threshold for active points
 % for scenario 2
     table_thr = 30;
-    my_left_thr = 15;
+    my_left_thr = 25;
     my_right_thr = 15;
     other_left_thr = Inf;
     %other_left_thr = 100;
@@ -127,7 +127,21 @@ function [] = final_results_after_tracking()
 
     img_size = window_data(1).img_size;
 
-    % loop over each frame
+    prev_table_pos = [NaN NaN];
+    prev_my_left_pos = [NaN NaN];
+    prev_my_right_pos = [NaN NaN];
+    prev_ot_left_pos = [NaN NaN];
+    prev_ot_right_pos = [NaN NaN];
+    prev_pan_pos = [NaN NaN];
+    prev_trivet_pos = [NaN NaN];
+    prev_beer_box_pos = [NaN NaN];
+    prev_butter_pos = [NaN NaN];
+    prev_oatmeal_pos = [NaN NaN];
+    prev_coffee_pos = [NaN NaN];
+
+    %loop over each frame
+    %num_of_frames = 125;
+
     for f = 1:num_of_frames 
         % show processing frame
         X = sprintf('processing... frame: %d',f);
@@ -147,8 +161,10 @@ function [] = final_results_after_tracking()
                 %img = insertObjectAnnotation(img,'rectangle', window, objects{3}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{3}, 'LineWidth', 7);
                 table_pos = [table_m(f - table_start, 4) table_m(f - table_start, 5)];
                 ref_pos = table_pos;
+                prev_table_pos = table_pos;
             else
-                table_pos = [NaN NaN];
+                table_pos = prev_table_pos;
+                ref_pos = table_pos;
             end
         end
 
@@ -162,8 +178,9 @@ function [] = final_results_after_tracking()
                           my_left_m(f - my_left_start, 6) my_left_m(f - my_left_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{1}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{1}, 'LineWidth', 7);
                 raw_pos = [my_left_m(f - my_left_start, 4) my_left_m(f - my_left_start, 5)] - ref_pos;
+                prev_my_left_pos = raw_pos;
             else
-                raw_pos = [NaN NaN];
+                raw_pos = prev_my_left_pos;
             end
         end
 
@@ -175,8 +192,9 @@ function [] = final_results_after_tracking()
                           bk_my_left_m(my_left_start - f + 2, 6) bk_my_left_m(my_left_start - f + 2, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{1}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{1}, 'LineWidth', 7);
                 raw_pos = [bk_my_left_m(my_left_start - f + 2, 4) bk_my_left_m(my_left_start - f + 2, 5)] - ref_pos;
+                prev_my_left_pos = raw_pos;
             else
-                raw_pos = [NaN NaN];
+                raw_pos = prev_my_left_pos;
             end
         end
 
@@ -190,8 +208,9 @@ function [] = final_results_after_tracking()
                           my_right_m(f - my_right_start, 6) my_right_m(f - my_right_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{2}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{2}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (my_right_m(f - my_right_start, 4) - ref_pos(1)) (my_right_m(f - my_right_start, 5) - ref_pos(2))];
+                prev_my_right_pos = [(my_right_m(f - my_right_start, 4) - ref_pos(1)) (my_right_m(f - my_right_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_my_right_pos];
             end
         end
 
@@ -203,8 +222,9 @@ function [] = final_results_after_tracking()
                           bk_my_right_m(my_right_start - f + 2, 6) bk_my_right_m(my_right_start - f + 2, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{2}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{2}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (bk_my_right_m(my_right_start - f + 2, 4) - ref_pos(1)) (bk_my_right_m(my_right_start - f + 2, 5) - ref_pos(2))];
+                prev_my_right_pos = [(bk_my_right_m(my_right_start - f + 2, 4) - ref_pos(1)) (bk_my_right_m(my_right_start - f + 2, 5) - ref_pos(2))]; 
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_my_right_pos];
             end
         end
 
@@ -218,8 +238,9 @@ function [] = final_results_after_tracking()
                           other_left_m(f - other_left_start, 6) other_left_m(f - other_left_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{3}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{3}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (other_left_m(f - other_left_start, 4) - ref_pos(1)) (other_left_m(f - other_left_start, 5) - ref_pos(2))];
+                prev_ot_left_pos = [(other_left_m(f - other_left_start, 4) - ref_pos(1)) (other_left_m(f - other_left_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_ot_left_pos];
             end
         end
 
@@ -230,9 +251,10 @@ function [] = final_results_after_tracking()
                 window = [bk_other_left_m(other_left_start - f + 2, 11) bk_other_left_m(other_left_start - f + 2, 12) ...
                           bk_other_left_m(other_left_start - f + 2, 6) bk_other_left_m(other_left_start - f + 2, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{3}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{3}, 'LineWidth', 7);
-                raw_pos = [raw_pos; (bk_other_left_m(other_left_start - f + 2, 4) - ref_pos(1)) (bk_other_left_m(other_left_start - f + 2, 5) - ref_pos(2))]; 
+                raw_pos = [raw_pos; (bk_other_left_m(other_left_start - f + 2, 4) - ref_pos(1)) (bk_other_left_m(other_left_start - f + 2, 5) - ref_pos(2))];
+                prev_ot_left_pos = [(bk_other_left_m(other_left_start - f + 2, 4) - ref_pos(1)) (bk_other_left_m(other_left_start - f + 2, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_ot_left_pos];
             end
         end
 
@@ -246,10 +268,10 @@ function [] = final_results_after_tracking()
                           other_right_m(f - other_right_start, 6) other_right_m(f - other_right_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{4}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{4}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (other_right_m(f - other_right_start, 4) - ref_pos(1)) (other_right_m(f - other_right_start, 5) - ref_pos(2))];
+                prev_ot_right_pos = [(other_right_m(f - other_right_start, 4) - ref_pos(1)) (other_right_m(f - other_right_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_ot_right_pos];
             end
-            
         end
 
         % bk other right
@@ -260,8 +282,9 @@ function [] = final_results_after_tracking()
                           bk_other_right_m(other_right_start - f + 2, 6) bk_other_right_m(other_right_start - f + 2, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, hand_types{4}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', hand_colors{4}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (bk_other_right_m(other_right_start - f + 2, 4) - ref_pos(1)) (bk_other_right_m(other_right_start - f + 2, 5) - ref_pos(2))];
+                prev_ot_right_pos = [(bk_other_right_m(other_right_start - f + 2, 4) - ref_pos(1)) (bk_other_right_m(other_right_start - f + 2, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_ot_right_pos];
             end
         end
 
@@ -276,8 +299,9 @@ function [] = final_results_after_tracking()
                           pan_m(f - pan_start, 6) pan_m(f - pan_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{1}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{1}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (pan_m(f - pan_start, 4) - ref_pos(1)) (pan_m(f - pan_start, 5) - ref_pos(2))];
+                prev_pan_pos = [(pan_m(f - pan_start, 4) - ref_pos(1)) (pan_m(f - pan_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_pan_pos];
             end
         end
 
@@ -291,8 +315,9 @@ function [] = final_results_after_tracking()
                           trivet_m(f - trivet_start, 6) trivet_m(f - trivet_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{2}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{2}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (trivet_m(f - trivet_start, 4) - ref_pos(1)) (trivet_m(f - trivet_start, 5) - ref_pos(2))];
+                prev_trivet_pos = [(trivet_m(f - trivet_start, 4) - ref_pos(1)) (trivet_m(f - trivet_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_trivet_pos];
             end
         end
 
@@ -307,8 +332,9 @@ function [] = final_results_after_tracking()
                           beer_box_m(f - beer_box_start, 6) beer_box_m(f - beer_box_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{6}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{6}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (beer_box_m(f - beer_box_start, 4) - ref_pos(1)) (beer_box_m(f - beer_box_start, 5) - ref_pos(2))]; 
+                prev_beer_box_pos = [(beer_box_m(f - beer_box_start, 4) - ref_pos(1)) (beer_box_m(f - beer_box_start, 5) - ref_pos(2))]; 
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_beer_box_pos];
             end
         end
 
@@ -323,8 +349,9 @@ function [] = final_results_after_tracking()
                           oatmeal_m(f - oatmeal_start, 6) oatmeal_m(f - oatmeal_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{3}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{3}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (oatmeal_m(f - oatmeal_start, 4) - ref_pos(1)) (oatmeal_m(f - oatmeal_start, 5) - ref_pos(2))];
+                prev_oatmeal_pos = [(oatmeal_m(f - oatmeal_start, 4) - ref_pos(1)) (oatmeal_m(f - oatmeal_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_oatmeal_pos];
             end
         end
 
@@ -339,8 +366,9 @@ function [] = final_results_after_tracking()
                           butter_m(f - butter_start, 6) butter_m(f - butter_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{1}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{1}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (butter_m(f - butter_start, 4) - ref_pos(1)) (butter_m(f - butter_start, 5) - ref_pos(2))];
+                prev_butter_pos = [(butter_m(f - butter_start, 4) - ref_pos(1)) (butter_m(f - butter_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_butter_pos];
             end
         end
 
@@ -355,11 +383,11 @@ function [] = final_results_after_tracking()
                           coffee_m(f - coffee_start, 6) coffee_m(f - coffee_start, 7)]; % turn into [x y width height] for rectint function
                 img = insertObjectAnnotation(img,'rectangle', window, objects{2}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{2}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (coffee_m(f - coffee_start, 4) - ref_pos(1)) (coffee_m(f - coffee_start, 5) - ref_pos(2))];
+                prev_coffee_pos = [(coffee_m(f - coffee_start, 4) - ref_pos(1)) (coffee_m(f - coffee_start, 5) - ref_pos(2))];
             else
-                raw_pos = [raw_pos; NaN NaN];
+                raw_pos = [raw_pos; prev_coffee_pos];
             end
         end
-
 
         data_disk(:,:,1,f) = raw_pos;
         label_disk(1:10,f) = raw_pos(:,1);
