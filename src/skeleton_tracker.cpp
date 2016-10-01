@@ -108,8 +108,8 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
            // tfansform each body position to camera frame
            // get the transform from camera frame to the frame of each joint
            tfListener.lookupTransform(cam_model.tfFrame(), "/head_1", ros::Time(0), tf_head);
-           tfListener.lookupTransform(cam_model.tfFrame(), "/left_hand_1", ros::Time(0), tf_left_hand);
-           tfListener.lookupTransform(cam_model.tfFrame(), "/right_hand_1", ros::Time(0), tf_right_hand);
+           tfListener.lookupTransform(cam_model.tfFrame(), "/right_hand_1", ros::Time(0), tf_left_hand);
+           tfListener.lookupTransform(cam_model.tfFrame(), "/left_hand_1", ros::Time(0), tf_right_hand);
            tfListener.lookupTransform(cam_model.tfFrame(), "/torso_1", ros::Time(0), tf_torso);
        }
        catch (tf::TransformException & ex)
@@ -174,6 +174,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        cv::circle(cv_ptr->image, right_hand_uv, RADIUS, CV_RGB(0,0,255), -1);
        cv::circle(cv_ptr->image, torso_uv, RADIUS, CV_RGB(0,0,0), -1);
 
+       // 20 is the size of offset for priniting out text
        CvPoint head_origin = cvPoint(head_uv.x - 20, head_uv.y - 20);
        cv::putText(cv_ptr->image, "Head", head_origin, cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(0,255,0));
        CvPoint left_h_origin = cvPoint(left_hand_uv.x - 20, left_hand_uv.y - 20);
@@ -196,7 +197,7 @@ void SkeletonTracker::onNewImageCallback(const sensor_msgs::ImageConstPtr& image
        full_screen.header = cv_ptr->header;
        full_screen.encoding = cv_ptr->encoding;
        cv::resize(cv_ptr->image, full_screen.image, full_screen.image.size(), 0, 0, cv::INTER_NEAREST);
-       robot_screen.publish(full_screen.toImageMsg());
+       //robot_screen.publish(full_screen.toImageMsg());
     }
 }
 
