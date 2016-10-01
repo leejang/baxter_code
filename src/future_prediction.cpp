@@ -25,9 +25,17 @@ using namespace std;
 #define PREDICTION_OUTPUT "/home/leejang/data/recorded_videos_on_0920_2016/scenario2/0214/prediction.txt"
 #define DATASET "data"
 #define LABELSET "label"
-#define OBJ_ID_TABLE 0
 #define IMG_WIDTH 640
 #define IMG_HEIGHT 480
+///////////////////////////////////
+// OBJECT ID DEFINITIONS
+#define OBJ_ID_TABLE 0
+#define OBJ_ID_PAN_1 1
+#define OBJ_ID_PAN_2 2
+#define OBJ_ID_PAN_3 3
+#define OBJ_ID_TRIVET_1 4
+#define OBJ_ID_TRIVET_2 5
+#define OBJ_ID_TRIVET_3 6
 ///////////////////////////////////
 
 FuturePrediction::FuturePrediction(ros::NodeHandle nh)
@@ -51,7 +59,7 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
 
 #ifdef CPU_ONLY
     cout << "CPU_ONLY" << endl;
-    Caffe::set_mode(Caffe::CPU);    
+    Caffe::set_mode(Caffe::CPU);
 #else
     Caffe::set_mode(Caffe::GPU);
     Caffe::SetDevice(GPU_DEVICE_ID);
@@ -92,10 +100,27 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
 
     full_screen.image = cv::Mat(600, 1024, CV_8UC3);
 
-    // reference pose (table)
-    ref_pose.x = 0;
-    ref_pose.y = 0;
-    got_ref_pose = false;
+    // intialize all hands/objects poses
+    my_left_hand_pose.x = 0, my_left_hand_pose.y = 0;
+    my_right_hand_pose.x = 0, my_right_hand_pose.y = 0;
+    yr_left_hand_pose.x = 0, yr_left_hand_pose.y = 0;
+    yr_right_hand_pose.x = 0, yr_right_hand_pose.y = 0;
+    obj_pan_pose.x = 0, obj_pan_pose.y = 0;
+    obj_trivet_pose.x = 0, obj_trivet_pose.y = 0;
+    obj_beer_box_pose.x = 0, obj_beer_box_pose.y = 0;
+    obj_oatmeal_pose.x = 0, obj_oatmeal_pose.y = 0;
+    obj_butter_pose.x = 0, obj_butter_pose.y = 0;
+    obj_coffee_pose.x = 0, obj_coffee_pose.y = 0;
+
+    // predicted positions
+    // future my left hand pose
+    f_my_left_hand_pose.x = 0, f_my_left_hand_pose.y = 0;
+    // future my right hand pose
+    f_my_right_hand_pose.x = 0, f_my_right_hand_pose.y = 0;
+
+   // reference pose (table)
+    ref_pose.x = 210, ref_pose.y = 211;
+    got_ref_pose = true;
 
     cout << "Initialization done!" <<endl;
 }
@@ -118,40 +143,107 @@ FuturePrediction::~FuturePrediction()
 
 void FuturePrediction::headPoseCB(const geometry_msgs::Pose2D pose)
 {
-#if 1
     //cout << "FP: headPoseCB Count: " << head_pose_cnt << endl;
 
     // my_left
-    // x
-    dataset[0][0][0][0 + head_pose_cnt * DIM1] =
-        (my_left_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2); 
-    // y
-    dataset[0][0][1][0 + head_pose_cnt * DIM1] =
-        (my_left_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2); 
+    if ((my_left_hand_pose.x != 0) || (my_left_hand_pose.y != 0)) {
+        // x
+        dataset[0][0][0][0 + head_pose_cnt * DIM1] =
+            (my_left_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][0 + head_pose_cnt * DIM1] =
+            (my_left_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
 
     // my_right
-    // x
-    dataset[0][0][0][1 + head_pose_cnt * DIM1] =
-        (my_right_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2); 
-    // y
-    dataset[0][0][1][1 + head_pose_cnt * DIM1] =
-        (my_right_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2); 
+    if ((my_right_hand_pose.x != 0) || (my_right_hand_pose.y != 0)) {
+        // x
+        dataset[0][0][0][1 + head_pose_cnt * DIM1] =
+            (my_right_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][1 + head_pose_cnt * DIM1] =
+            (my_right_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
 
     // your_left
-    // x
-    dataset[0][0][0][2 + head_pose_cnt * DIM1] =
-        (yr_left_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2); 
-    // y
-    dataset[0][0][1][2 + head_pose_cnt * DIM1] =
-        (yr_left_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2); 
+    if ((yr_left_hand_pose.x != 0) || (yr_left_hand_pose.y != 0)) {
+        // x
+        dataset[0][0][0][2 + head_pose_cnt * DIM1] =
+            (yr_left_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][2 + head_pose_cnt * DIM1] =
+            (yr_left_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
 
     // your_right
-    // x
-    dataset[0][0][0][3 + head_pose_cnt * DIM1] =
-        (yr_right_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2); 
-    // y
-    dataset[0][0][1][3 + head_pose_cnt * DIM1] =
-        (yr_right_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2); 
+    if ((yr_right_hand_pose.x != 0) || (yr_right_hand_pose.y != 0)) {
+        // x
+        dataset[0][0][0][3 + head_pose_cnt * DIM1] =
+            (yr_right_hand_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][3 + head_pose_cnt * DIM1] =
+            (yr_right_hand_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: pan
+    if ((obj_pan_pose.x != 0) || (obj_pan_pose.y != 0)) {
+        // x
+        dataset[0][0][0][4 + head_pose_cnt * DIM1] =
+            (obj_pan_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][4 + head_pose_cnt * DIM1] =
+            (obj_pan_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: trivet
+    if ((obj_trivet_pose.x != 0) || (obj_trivet_pose.y != 0)) {
+        // x
+        dataset[0][0][0][5 + head_pose_cnt * DIM1] =
+            (obj_trivet_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][5 + head_pose_cnt * DIM1] =
+            (obj_trivet_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: beer_box
+    if ((obj_beer_box_pose.x != 0) || (obj_beer_box_pose.y != 0)) {
+        // x
+        dataset[0][0][0][6 + head_pose_cnt * DIM1] =
+            (obj_beer_box_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][6 + head_pose_cnt * DIM1] =
+            (obj_beer_box_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: oatmeal
+    if ((obj_oatmeal_pose.x != 0) || (obj_oatmeal_pose.y != 0)) {
+        // x
+        dataset[0][0][0][7 + head_pose_cnt * DIM1] =
+            (obj_oatmeal_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][7 + head_pose_cnt * DIM1] =
+            (obj_oatmeal_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: butter
+    if ((obj_butter_pose.x != 0) || (obj_butter_pose.y != 0)) {
+        // x
+        dataset[0][0][0][8 + head_pose_cnt * DIM1] =
+            (obj_butter_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][8 + head_pose_cnt * DIM1] =
+            (obj_butter_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
+
+    // object: coffee
+    if ((obj_coffee_pose.x != 0) || (obj_coffee_pose.y != 0)) {
+        // x
+        dataset[0][0][0][9 + head_pose_cnt * DIM1] =
+            (obj_coffee_pose.x - ref_pose.x + IMG_WIDTH)/(IMG_WIDTH * 2);
+        // y
+        dataset[0][0][1][9 + head_pose_cnt * DIM1] =
+            (obj_coffee_pose.y - ref_pose.y + IMG_HEIGHT)/(IMG_HEIGHT * 2);
+    }
 
     if (head_pose_cnt == 9) {
         if (save_hdf_file) {
@@ -163,7 +255,6 @@ void FuturePrediction::headPoseCB(const geometry_msgs::Pose2D pose)
     } else { 
         head_pose_cnt++;
     }
-#endif
     //doDetection();
 }
 
@@ -176,6 +267,9 @@ void FuturePrediction::leftHandPoseCB(const geometry_msgs::Pose2D pose)
     cout << "your left_hand_pose: " << yr_left_hand_pose.x << ", "
          << yr_left_hand_pose.y << endl;
 #endif
+    if ((obj_pan_pose.x != 0) || (obj_trivet_pose.x != 0)) {
+        yr_left_hand_pose.x = 0, yr_left_hand_pose.y = 0;
+    }
 }
 
 void FuturePrediction::rightHandPoseCB(const geometry_msgs::Pose2D pose)
@@ -199,7 +293,7 @@ void FuturePrediction::objPoseCB(const std_msgs::Float32MultiArray & msg)
             float objectWidth = msg.data[i+1];
             float objectHeight = msg.data[i+2];
 
-            cout << "object detected!" << endl;
+            //cout << "object detected!" << endl;
 
             cv::Mat cvHomography(3, 3, CV_32F);
             cvHomography.at<float>(0,0) = msg.data[i+3];
@@ -219,6 +313,7 @@ void FuturePrediction::objPoseCB(const std_msgs::Float32MultiArray & msg)
             inPts.push_back(cv::Point2f(objectWidth,objectHeight));
             cv::perspectiveTransform(inPts, outPts, cvHomography);
 
+            // 0
             if (id == OBJ_ID_TABLE) {
 
                 if (!got_ref_pose) {
@@ -227,8 +322,30 @@ void FuturePrediction::objPoseCB(const std_msgs::Float32MultiArray & msg)
                     cout << "Table: " << ref_pose.x << ", " << ref_pose.y << endl;
                     got_ref_pose = true;
                 }
-
             }
+            // 1 ~ 3
+            if (id == OBJ_ID_PAN_1) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_PAN_2) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_PAN_3) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            }
+            // 4 ~ 6
+            if (id == OBJ_ID_TRIVET_1) {
+                    obj_trivet_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_trivet_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_TRIVET_2) {
+                    obj_trivet_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_trivet_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_TRIVET_3) {
+                    obj_trivet_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_trivet_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            }
+
 #if 0
             printf("Object %d detected, CV corners at (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
                     id,
@@ -303,9 +420,26 @@ void FuturePrediction::onNewImageCB(const sensor_msgs::ImageConstPtr& image_msg,
        // your right hand
        cv::Point2d yr_right_hand_cv_pt(yr_right_hand_pose.x, yr_right_hand_pose.y);
        cv::circle(cv_ptr->image, yr_right_hand_cv_pt, RADIUS, CV_RGB(0,0,255), -1);
+
        // ref object (table)
        cv::Point2d ref_pose_cv_pt(ref_pose.x, ref_pose.y);
        cv::circle(cv_ptr->image, ref_pose_cv_pt, RADIUS, CV_RGB(0,0,0), -1);
+
+       // object pan
+       cv::Point2d obj_pan_pose_cv_pt(obj_pan_pose.x, obj_pan_pose.y);
+       cv::circle(cv_ptr->image, obj_pan_pose_cv_pt, RADIUS, CV_RGB(0,0,0), -1);
+
+       // object trivet
+       cv::Point2d obj_trivet_pose_cv_pt(obj_trivet_pose.x, obj_trivet_pose.y);
+       cv::circle(cv_ptr->image, obj_trivet_pose_cv_pt, RADIUS, CV_RGB(0,0,0), -1);
+
+       // predicted my left hand
+       cv::Point2d f_my_left_hand_pose_cv_pt(f_my_left_hand_pose.x, f_my_left_hand_pose.y);
+       cv::circle(cv_ptr->image, f_my_left_hand_pose_cv_pt, RADIUS, CV_RGB(204,0,77), -1);
+
+       // predicted my right hand
+       cv::Point2d f_my_right_hand_pose_cv_pt(f_my_right_hand_pose.x, f_my_right_hand_pose.y);
+       cv::circle(cv_ptr->image, f_my_right_hand_pose_cv_pt, RADIUS, CV_RGB(0,204,77), -1);
 
        // 20 is the size of offset for priniting out text
 
@@ -346,7 +480,7 @@ void FuturePrediction::predictFuture()
 #endif
 
     float loss = 0;
-    unsigned int num_iterations = 114;
+    unsigned int num_iterations = 1;
     for (int i = 0; i < num_iterations; ++i) {
         float iter_loss = 0;
 
@@ -360,6 +494,25 @@ void FuturePrediction::predictFuture()
         //cout << result[0]->count() << endl;
         for (int j = 0; j < result[0]->count(); ++j) {
             const float score = result_vec[j];
+
+            if (j == 0) {
+                //cout << " predicted my hand: [ " << j << "]" << " score: " << score << endl;
+                f_my_left_hand_pose.x = (int)round((score - 0.5)*IMG_WIDTH*2) + ref_pose.x;
+            }
+            if (j == 10) {
+                //cout << " predicted my hand: [ " << j << "]" << " score: " << score << endl;
+                f_my_left_hand_pose.y = (int)round((score - 0.5)*IMG_HEIGHT*2) + ref_pose.y;
+            }
+            if (j == 1) {
+                //cout << " predicted my hand: [ " << j << "]" << " score: " << score << endl;
+                f_my_right_hand_pose.x = (int)round((score - 0.5)*IMG_WIDTH*2) + ref_pose.x;
+                //cout << "predicted my right x: " << f_my_right_hand_pose.x << "ref_pose.x: " << ref_pose.x << endl;
+            }
+            if (j == 11) {
+                //cout << " predicted my hand: [ " << j << "]" << " score: " << score << endl;
+                f_my_right_hand_pose.y = (int)round((score - 0.5)*IMG_HEIGHT*2) + ref_pose.y;
+                //cout << "predicted my right y: " << f_my_right_hand_pose.y << endl;
+            }
 #if 0
             if (j == 19)
                 cnn_output << score << endl;

@@ -68,14 +68,25 @@ private:
     std_msgs::UInt64 completed_frame_cnt;
     ros::Publisher detected_pub;
 
-    // u, v points of each hand (x,y)
+    // u, v points of each hand (x,y) current positions
     geometry_msgs::Pose2D my_left_hand_pose;
-    geometry_msgs::Pose2D yr_left_hand_pose;
     geometry_msgs::Pose2D my_right_hand_pose;
+    geometry_msgs::Pose2D yr_left_hand_pose;
     geometry_msgs::Pose2D yr_right_hand_pose;
+    geometry_msgs::Pose2D obj_pan_pose;
+    geometry_msgs::Pose2D obj_trivet_pose;
+    geometry_msgs::Pose2D obj_beer_box_pose;
+    geometry_msgs::Pose2D obj_oatmeal_pose;
+    geometry_msgs::Pose2D obj_butter_pose;
+    geometry_msgs::Pose2D obj_coffee_pose;
 
     // ref_pose (table)
     geometry_msgs::Pose2D ref_pose;
+
+    // predicted positions
+    // future my left hand pose
+    geometry_msgs::Pose2D f_my_left_hand_pose;
+    geometry_msgs::Pose2D f_my_right_hand_pose;
 
     // Caffe
     Net<float> *caffe_net;
