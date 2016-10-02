@@ -25,6 +25,11 @@
 #include <image_transport/image_transport.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <tf/transform_listener.h>
+#include <find_object_2d/ObjectsStamped.h>
+#include <baxter_core_msgs/EndpointState.h>
+
+#include "baxter_controller.h"
+#include "baxter_moveit_controller.h"
 
 #include "hdf5.h"
 
@@ -34,6 +39,9 @@
 #define DIM1 10 /* number of variables in state representation */
 #define DIM2 10 /* number of concatenated vectors */
 #define CHUNK_SZ 1
+
+#define NUM_OF_MOTIONS 15
+#define NUM_OF_JOINTS 7
 
 using caffe::Caffe;
 using caffe::Net;
@@ -60,6 +68,11 @@ private:
 
     // subscriber to get detected objects positions
     ros::Subscriber obj_pose_sub;
+    ros::Subscriber obj_pose_w_depth_sub;
+
+    // robot both arm's endpoints
+    ros::Subscriber right_end_sub;
+    ros::Subscriber left_end_sub;
 
     // to display skeleton tracking image on Baxter's screen
     ros::Publisher robot_screen;
@@ -80,6 +93,8 @@ private:
     geometry_msgs::Pose2D obj_butter_pose;
     geometry_msgs::Pose2D obj_coffee_pose;
 
+    tf::StampedTransform obj_trivet_pose_w_d;
+
     // ref_pose (table)
     geometry_msgs::Pose2D ref_pose;
 
@@ -87,6 +102,10 @@ private:
     // future my left hand pose
     geometry_msgs::Pose2D f_my_left_hand_pose;
     geometry_msgs::Pose2D f_my_right_hand_pose;
+    geometry_msgs::Pose2D f_yr_left_hand_pose;
+    geometry_msgs::Pose2D f_yr_right_hand_pose;
+    geometry_msgs::Pose2D f_obj_pan_pose;
+    geometry_msgs::Pose2D f_obj_trivet_pose;
 
     // Caffe
     Net<float> *caffe_net;
@@ -96,10 +115,16 @@ private:
     void rightHandPoseCB(const geometry_msgs::Pose2D pose);
 
     void objPoseCB(const std_msgs::Float32MultiArray & msg);
+    void objPoseWDepthCB(const find_object_2d::ObjectsStampedConstPtr & msg);
     unsigned int head_pose_cnt;
 
     void onNewImageCB(const sensor_msgs::ImageConstPtr& image_msg,
                             const sensor_msgs::CameraInfoConstPtr& info_msg);
+    // state of left end
+    void leftEndCB(const baxter_core_msgs::EndpointStateConstPtr &msg);
+    // state of right end
+    void rightEndCB(const baxter_core_msgs::EndpointStateConstPtr &msg);
+
     // To write HDF5 file
     // Handles
     hid_t file, dspace, lspace, dset, lset, dcpl, lcpl;
@@ -129,5 +154,27 @@ private:
     // to display on the Baxter's screen with full size (1024 * 600)
     cv_bridge::CvImage full_screen;
 
+    // Baxter Controller
+    BaxterController *baxter_ctrl;
+    BaxterMoveitController *baxter_moveit_ctrl;
+
+    // goal positions for each arm
+    geometry_msgs::Pose target_pose_left;
+    geometry_msgs::Pose target_pose_right;
+
+    geometry_msgs::Point target_point_left;
+    geometry_msgs::Point target_point_right;
+
+    geometry_msgs::Pose cur_pose_left;
+    geometry_msgs::Pose cur_pose_right;
+
+    // to generate Baxter Motions
+    void generateRobotMotion();
+
+    // Util functions
+    int getDistance(int x1, int y1, int x2, int y2);
+
+    void loadMotionMappingTable();
+    double motionMapping[NUM_OF_MOTIONS][9];
 };
 #endif

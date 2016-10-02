@@ -155,10 +155,14 @@ set(TRAIN_HEADER_FILES
 set(FUTURE_PREDICTION_SOURCE_FILES
   src/future_prediction.cpp
   src/future_prediction_node.cpp
+  src/baxter_controller.cpp
+  src/baxter_moveit_controller.cpp
 )
 
 set(FUTURE_PREDICTION_HEADER_FILES
   src/future_prediction.h
+  src/baxter_controller.cpp
+  src/baxter_moveit_controller.h
 )
 
 # For OpenCV

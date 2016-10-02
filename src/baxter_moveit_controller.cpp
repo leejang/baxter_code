@@ -111,7 +111,7 @@ int BaxterMoveitController::moveToNeutral()
 
 int BaxterMoveitController::moveLeftHandTo(geometry_msgs::Point set_point)
 {
-    //cout << "move To Left Hand to (point)!" << endl;
+    cout << "move To Left Hand to (point)!" << endl;
     left_arm_move_group->setStartStateToCurrentState();
 
     target_pose_left.position.x = set_point.x;
