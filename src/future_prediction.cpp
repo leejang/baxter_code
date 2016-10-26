@@ -19,10 +19,9 @@ using namespace std;
 #define GPU_DEVICE_ID 1
 //#define CPU_ONLY
 #define MODEL_PATH "/home/leejang/data/caffe_models/robot_learning.prototxt"
-//#define WEIGHTS_PATH "/home/leejang/data/caffe_models/robot_learning.caffemodel"
-#define WEIGHTS_PATH "/home/leejang/data/caffe_models/tmp_iter_500000.caffemodel"
-#define PREDICTION_INPUT "/home/leejang/data/recorded_videos_on_0920_2016/scenario2/0214/prediction_input.h5"
-#define PREDICTION_OUTPUT "/home/leejang/data/recorded_videos_on_0920_2016/scenario2/0214/prediction.txt"
+#define WEIGHTS_PATH "/home/leejang/data/caffe_models/robot_learning.caffemodel"
+#define PREDICTION_INPUT "/home/leejang/data/caffe_models/prediction_input.h5"
+#define PREDICTION_OUTPUT "/home/leejang/data/caffe_models/prediction.txt"
 #define DATASET "data"
 #define LABELSET "label"
 #define IMG_WIDTH 640
@@ -33,9 +32,19 @@ using namespace std;
 #define OBJ_ID_PAN_1 1
 #define OBJ_ID_PAN_2 2
 #define OBJ_ID_PAN_3 3
-#define OBJ_ID_TRIVET_1 4
-#define OBJ_ID_TRIVET_2 5
-#define OBJ_ID_TRIVET_3 6
+#define OBJ_ID_PAN_4 4
+#define OBJ_ID_PAN_5 5
+#define OBJ_ID_PAN_6 6
+#define OBJ_ID_PAN_7 7
+#define OBJ_ID_PAN_8 8
+#define OBJ_ID_PAN_9 9
+#define OBJ_ID_PAN_10 10
+#define OBJ_ID_TRIVET_1 11
+#define OBJ_ID_TRIVET_2 12
+#define OBJ_ID_TRIVET_3 13
+#define OBJ_ID_TRIVET_4 14
+#define OBJ_ID_TRIVET_5 15
+
 ///////////////////////////////////
 
 template <typename T>
@@ -69,22 +78,6 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
     cam_sub = it->subscribeCamera(ROS_CAM_RGB_COLOR_PATH, 10, &FuturePrediction::onNewImageCB, this);
     robot_screen = nh.advertise<sensor_msgs::Image>("robot/xdisplay", 1, true);
 
-
-#ifdef CPU_ONLY
-    cout << "CPU_ONLY" << endl;
-    Caffe::set_mode(Caffe::CPU);
-#else
-    Caffe::set_mode(Caffe::GPU);
-    Caffe::SetDevice(GPU_DEVICE_ID);
-#endif
-
-    string model_path = MODEL_PATH;
-    string weights_path = WEIGHTS_PATH;
-
-    // Caffe Initialize
-    caffe_net = new Net<float>(model_path, caffe::TEST);
-    caffe_net->CopyTrainedLayersFrom(weights_path);
-
     head_pose_cnt = 0;
     completed_frame_cnt.data = 0;
 
@@ -108,6 +101,8 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
     lcpl = H5Pcreate(H5P_DATASET_CREATE);
     status = H5Pset_chunk(lcpl, LABEL_DIM, l_dims);
     lset = H5Dcreate(file, LABELSET, H5T_IEEE_F32BE, lspace, H5P_DEFAULT, lcpl, H5P_DEFAULT);
+
+    status = H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, dataset[0]);
 
     save_hdf_file = true;
 
@@ -137,7 +132,7 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
     // reference pose (table)
     ref_pose.x = 193, ref_pose.y = 237;
     got_ref_pose = true;
-
+#if 0
     // Baxter controller without motion planning
     baxter_ctrl = new BaxterController(nh);
 
@@ -153,6 +148,7 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
     baxter_ctrl->moveRightToJointPositions(right_approach);
 
     loadMotionMappingTable();
+#endif
 
 #if 0
     for (int i = 0; i < 20; j++) {
@@ -161,14 +157,32 @@ FuturePrediction::FuturePrediction(ros::NodeHandle nh)
          }
      }
 #endif
+
+#if 1
+#ifdef CPU_ONLY
+    cout << "CPU_ONLY" << endl;
+    Caffe::set_mode(Caffe::CPU);
+#else
+    Caffe::set_mode(Caffe::GPU);
+    Caffe::SetDevice(GPU_DEVICE_ID);
+#endif
+
+    string model_path = MODEL_PATH;
+    string weights_path = WEIGHTS_PATH;
+
+    // Caffe Initialize
+    caffe_net = new Net<float>(model_path, caffe::TEST);
+    caffe_net->CopyTrainedLayersFrom(weights_path);
+#endif
     cout << "Initialization done!" <<endl;
 }
 
 FuturePrediction::~FuturePrediction()
 {
+#if 0
     if (caffe_net != NULL)
         delete caffe_net;
-
+#endif
     // close all HDF5 hanles
     status = H5Pclose(dcpl);
     status = H5Pclose(lcpl);
@@ -365,7 +379,7 @@ void FuturePrediction::objPoseCB(const std_msgs::Float32MultiArray & msg)
                     got_ref_pose = true;
                 }
             }
-            // 1 ~ 3
+            // 1 ~ 10
             if (id == OBJ_ID_PAN_1) {
                     obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
                     obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
@@ -375,8 +389,17 @@ void FuturePrediction::objPoseCB(const std_msgs::Float32MultiArray & msg)
             } else if (id == OBJ_ID_PAN_3) {
                     obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
                     obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_PAN_4) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            } else if (id == OBJ_ID_PAN_5) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
+            }  else if (id == OBJ_ID_PAN_6) {
+                    obj_pan_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
+                    obj_pan_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
             }
-            // 4 ~ 6
+            // 11 ~ 15
             if (id == OBJ_ID_TRIVET_1) {
                     obj_trivet_pose.x = (int)round((outPts.at(0).x + outPts.at(3).x)/2);
                     obj_trivet_pose.y = (int)round((outPts.at(0).y + outPts.at(3).y)/2);
@@ -617,8 +640,25 @@ void FuturePrediction::predictFuture()
 {
     //cout << "predict Future!" << endl;
 
-    //std::ofstream cnn_output;
-    //cnn_output.open(PREDICTION_OUTPUT);
+#if 0
+#ifdef CPU_ONLY
+    cout << "CPU_ONLY" << endl;
+    Caffe::set_mode(Caffe::CPU);
+#else
+    Caffe::set_mode(Caffe::GPU);
+    Caffe::SetDevice(GPU_DEVICE_ID);
+#endif
+
+    string model_path = MODEL_PATH;
+    string weights_path = WEIGHTS_PATH;
+
+    // Caffe Initialize
+    caffe_net = new Net<float>(model_path, caffe::TEST);
+    caffe_net->CopyTrainedLayersFrom(weights_path);
+
+#endif
+    std::ofstream cnn_output;
+    cnn_output.open(PREDICTION_OUTPUT);
 
     const vector<shared_ptr<Layer<float> > >& layers = caffe_net->layers();
 
@@ -630,7 +670,7 @@ void FuturePrediction::predictFuture()
 #endif
 
     float loss = 0;
-    unsigned int num_iterations = 1;
+    unsigned int num_iterations = 235;
     for (int i = 0; i < num_iterations; ++i) {
         float iter_loss = 0;
 
@@ -639,12 +679,13 @@ void FuturePrediction::predictFuture()
         //cout << "loss: " << loss << endl;
         const float* result_vec = result[0]->cpu_data();
 
-        //cnn_output << i << "\t";
+        cnn_output << i << "\t";
         // number of windows in each batch_size
         //cout << result[0]->count() << endl;
         for (int j = 0; j < result[0]->count(); ++j) {
             const float score = result_vec[j];
 
+#if 0
             if (j == 0) {
                 //cout << " predicted my hand: [ " << j << "]" << " score: " << score << endl;
                 f_my_left_hand_pose.x = (int)round((score - 0.5)*IMG_WIDTH*2) + ref_pose.x;
@@ -690,21 +731,23 @@ void FuturePrediction::predictFuture()
             if (j == 15) {
                 f_obj_trivet_pose.y = (int)round((score - 0.5)*IMG_HEIGHT*2) + ref_pose.y;
             }
-#if 0
+#endif
             if (j == 19)
                 cnn_output << score << endl;
             else
                 cnn_output << score << " ";
-#endif
+
             //cout << " window num: [ " << j << "]" << " score: " << score << endl;
         }
     }
 
     //generate robot motion
-    generateRobotMotion();
+    //generateRobotMotion();
+
+    //delete caffe_net;
 
     save_hdf_file = true;
-    //cnn_output.close();
+    cnn_output.close();
 }
 
 void FuturePrediction::generateRobotMotion()
@@ -790,75 +833,108 @@ void FuturePrediction::loadMotionMappingTable()
          motionMapping[5][i] = map_6[i];
      }
      // 7th position
-     double map_7 [] = {442, 325, 0.7608544707911652, -0.5273058958356109, -0.2044029399857314, 1.1562380188686305, 1.3594904732634479, 0.4371845245473429, -1.7042526553406947};
+     double map_7 [] = {481, 355,0.698728248881806, -0.6945098017151211, -0.28455343615274425, 1.4568982532941717, 1.393238050596927, 0.6419709597300457, -1.8208351952199862};
      for (int i = 0; i < 9; i++) {
          motionMapping[6][i] = map_7[i];
      }
      // 8th position
-     double map_8 [] = {323, 331, 1.212995308020391, -0.5541505596236057, -0.27113110425874687, 1.2505778373235836, 1.4841264122791378, 0.05368932757598948, -1.4147137816273228};
+     double map_8 [] = {416, 362, 0.9997719785043184, -0.8057234088368136, -0.387330148941067, 1.6582332317041322, 1.5013836961428486, 0.5135000687446423, -1.817383738447244};
      for (int i = 0; i < 9; i++) {
          motionMapping[7][i] = map_8[i];
      }
      // 9 position
-     double map_9 [] = {192, 378, 1.613364293658484, -0.3857961681531816, -0.3593349995621582, 1.1182719943684667, 0.9050486648523941, -0.10469418877317949, -0.5925000793207411};
+     double map_9 [] = {355, 362, 1.1869176346263388, -0.7635389371699647, -0.324436936637765, 1.631005072719166, 1.7226604247953197, 0.228946632591898, -1.744903146219658};
      for (int i = 0; i < 9; i++) {
          motionMapping[8][i] = map_9[i];
      }
      // 10 position
-     double map_10 [] = {81, 358, 1.5443351582036402, 0.15301458359157002, -0.6005534784571395, 0.04486893804564835, 2.206247868176196, 0.14150972768242942, -1.615665264840312};
+     double map_10 [] = {281, 360,1.318456487187513, -0.6327670750027332, -0.30027673922856973, 1.4066603824909245, 1.6367575006737365, 0.23508255574343967, -1.4718545659760545};
      for (int i = 0; i < 9; i++) {
          motionMapping[9][i] = map_10[i];
      }
      // 11 position
-     double map_11 [] = {550, 298, 0.48397093857784806, 0.171422353046195, -0.1257864246066039, 0.029529130166794215, 1.7011846937649238, 0.0007669903939427069, -1.7345487759014315};
+     double map_11 [] = {224, 363,1.3947720313848124, -0.559902987578176, -0.18906313210687725, 1.2693691019751798, 1.7184419776286348, 0.08015049616701286, -1.4845099074761092};
      for (int i = 0; i < 9; i++) {
          motionMapping[10][i] = map_11[i];
      }
      // 12 position
-     double map_12 [] = {445, 294, 0.7244224270788866, 0.1277039005914607, -0.18484468494019235, 0.1277039005914607, 1.6662866308405306, 0.032213596545593685, -1.5554565189158096};
+     double map_12 [] = {165, 358, 1.4944807825973643, -0.4306651061988299, -0.20708740636453085, 1.0139613007922585, 1.6183497312191115, 0.08782040010643993, -1.4177817432030937};
      for (int i = 0; i < 9; i++) {
          motionMapping[11][i] = map_12[i];
      }
      // 13 position
-     double map_13 [] = {323, 297, 1.0730195611258468, 0.08513593372764046, -0.2822524649709161, 0.18906313210687725, 2.2561022437824723, -0.10431069357620813, -2.094267270660561};
+     double map_13 [] = {480, 316, 0.7113835903818606, -0.5414952181235511, -0.22434469022824177, 1.1125195664138963, 1.1431991821716045, 0.35703402838033005, -1.3188399823844845};
      for (int i = 0; i < 9; i++) {
          motionMapping[12][i] = map_13[i];
      }
      // 14 position
-     double map_14 [] = {191, 337, 1.3625584348392188, 0.21207284392515846, -0.2623107147284057, -0.021859226227367145,2.520330434495735, -0.18100973297047881, -2.3412381775101125};
+     double map_14 [] = {418, 309, 0.7113835903818606, -0.5414952181235511, -0.22511168062218448, 1.1113690808229824, 1.143582677368576, 0.35626703798638737, -1.3188399823844845};
      for (int i = 0; i < 9; i++) {
          motionMapping[13][i] = map_14[i];
      }
      // 15 position
-     double map_15 [] = {143, 350, 1.4442429117941171, 0.19980099762207515, -0.28723790253154374, 0.023776702212223912, 3.057607205452601, -0.012655341500054663, -2.954446997467307};
+     double map_15 [] = {355, 316, 0.9832816850345502, -0.47284957786567877, -0.12808739578843203, 1.0891263593986438, 1.594956524203859, 0.1514806028036846, -1.597257495385687};
      for (int i = 0; i < 9; i++) {
          motionMapping[14][i] = map_15[i];
      }
-#if 0
      // 16 position
-     double map_16 [] = {};
+     double map_16 [] = {278, 318, 1.291228328202547, -0.3608689803500436, -0.253873820395036, 0.9280583766706754, 1.5650438988400934, -0.0847524385306691, -1.3357137710512241};
      for (int i = 0; i < 9; i++) {
          motionMapping[15][i] = map_16[i];
      }
      // 17 position
-     double map_17 [] = {};
+     double map_17 [] = {228, 320, 1.367160377202875, -0.05292233718204677, -0.31139809994073897, 0.4333495725776294, 1.9216944320234521, -0.17103885784922362, -1.6486458517798483};
      for (int i = 0; i < 9; i++) {
          motionMapping[16][i] = map_17[i];
      }
      // 18 position
-     double map_18 [] = {};
+     double map_18 [] = {160, 336, 1.4212331999758359, 0.1936650744705335, -0.2676796474860047, -0.01227184630308331, 2.0240876496148035, -0.13614079492483047, -1.8085633489169028};
      for (int i = 0; i < 9; i++) {
          motionMapping[17][i] = map_18[i];
      }
      // 19 position
-     double map_19 [] = {};
+     double map_19 [] = {81, 358, 1.5443351582036402, 0.15301458359157002, -0.6005534784571395, 0.04486893804564835, 2.206247868176196, 0.14150972768242942, -1.615665264840312};
      for (int i = 0; i < 9; i++) {
          motionMapping[18][i] = map_19[i];
      }
      // 20 position
-     double map_20 [] = {};
+     double map_20 [] = {550, 298, 0.48397093857784806, 0.171422353046195, -0.1257864246066039, 0.029529130166794215, 1.7011846937649238, 0.0007669903939427069, -1.7345487759014315};
      for (int i = 0; i < 9; i++) {
          motionMapping[19][i] = map_20[i];
      }
-#endif
+     // 21 position
+     double map_21 [] = {482, 292, 0.6170437719269076, 0.146495165243057, -0.15493205957642678, 0.052155346788104066, 1.2785729867024924, 0.09357282806101024, -1.226034144717417};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[20][i] = map_20[i];
+     }
+     // 22 position
+     double map_22 [] = {418, 292, 0.8038059328519568, 0.07746602978821339, -0.18637866572807776, 0.19941750242510378, 1.4120293152485233, 0.0007669903939427069, -1.3380147422330522};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[21][i] = map_20[i];
+     }
+     // 23 position
+     double map_23 [] = {352, 302, 0.9898011033830633, -0.23431556534949696, -0.15339807878854136, 0.7079321336091184, 1.4526798061274868, 0.06864564025787226, -1.39975746894544};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[22][i] = map_20[i];
+     }
+     // 24 position
+     double map_24 [] = {292, 308, 1.15892248524743, -0.05062136600021865, -0.26384469551629114, 0.43795151494128565, 1.683927409901213, 0.004218447166684887, -1.5013836961428486};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[23][i] = map_20[i];
+     }
+     // 25 position
+     double map_25 [] = {227, 319, 1.2985147369450027, 0.0015339807878854137, -0.13115535736420286, 0.31676703269833795, 1.8960002538263714, -0.16106798272796843, -1.9113400617052256};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[24][i] = map_20[i];
+     }
+     // 26 position
+     double map_26 [] = {159, 346,1.4304370847031482, 0.19673303604630432, -0.27496605622846043, 0.02684466378799474, 1.8231361664018142, -0.10891263593986437, -1.6206507024009396};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[25][i] = map_20[i];
+     }
+     // 27 position
+     double map_27 [] = {143, 350, 1.4442429117941171, 0.19980099762207515, -0.28723790253154374, 0.023776702212223912, 3.057607205452601, -0.012655341500054663, -2.954446997467307};
+     for (int i = 0; i < 9; i++) {
+         motionMapping[26][i] = map_20[i];
+     }
 }

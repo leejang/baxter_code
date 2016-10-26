@@ -40,7 +40,7 @@
 #define DIM2 10 /* number of concatenated vectors */
 #define CHUNK_SZ 1
 
-#define NUM_OF_MOTIONS 15
+#define NUM_OF_MOTIONS 27
 #define NUM_OF_JOINTS 7
 
 using caffe::Caffe;

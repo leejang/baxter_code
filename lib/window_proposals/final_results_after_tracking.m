@@ -1,24 +1,24 @@
 function [] = final_results_after_tracking()
 
     % name of new video to create
-    new_video = '092016_0214_final.avi';
-    new_hdf5 = '092016_0214.h5';
+    new_video = '092016_0104_final.avi';
+    new_hdf5 = '092016_0104.h5';
 
     % threshold for active points
 % for scenario 2
     table_thr = 30;
-    my_left_thr = 25;
-    my_right_thr = 15;
-    other_left_thr = Inf;
+    my_left_thr = 100;
+    my_right_thr = 35;
+    other_left_thr = 130;
     %other_left_thr = 100;
     other_right_thr = 20;
 
     pan_thr = 15;
     trivet_thr = 15;
-    beer_box_thr = Inf;
-    oatmeal_thr = Inf;
-    butter_thr = Inf;
-    coffee_thr = Inf;
+    beer_box_thr = 15;
+    oatmeal_thr = 70;
+    butter_thr = 20;
+    coffee_thr = 30;
 
     % add RGB package to display color
     addpath(genpath('rgb'));
@@ -28,18 +28,26 @@ function [] = final_results_after_tracking()
     window_data = parse_input_window_file(window_file);
     assignin('base', 'window_data', window_data);
 
-% for scenario 2
-    % read csv files
-    pan_fname = 'pan.csv';
-    trivet_fname = 'trivet.csv';
     table_fname = 'table.csv';
     my_left_fname = 'my_left.csv';
     my_right_fname = 'my_right.csv';
+    other_left_fname = 'other_left.csv';
     other_right_fname = 'other_right.csv';
+    beer_box_fname = 'beer.csv';
+    oatmeal_fname = 'oatmeal.csv';
+    butter_fname = 'butter.csv';
+    coffee_fname = 'coffee.csv';
     bk_my_left_fname = 'bk_my_left.csv';
     bk_my_right_fname = 'bk_my_right.csv';
+    bk_other_left_fname = 'bk_other_left.csv';
     bk_other_right_fname = 'bk_other_right.csv';
+    bk_oatmeal_fname = 'bk_oatmeal.csv';
+    bk_butter_fname = 'bk_butter.csv';
+    bk_coffee_fname = 'bk_coffee.csv';
 
+    % read csv files
+%{
+    % for scenario 2
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % reference
     table_m = csvread(table_fname);
@@ -69,40 +77,50 @@ function [] = final_results_after_tracking()
     butter_m = zeros(size(table_m));
     % variable 10
     coffee_m = zeros(size(table_m));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%}
+
+
+    % for scenario 1
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % reference
+    table_m = csvread(table_fname);
+    % variable 1
+    my_left_m = csvread(my_left_fname);
+    bk_my_left_m = csvread(bk_my_left_fname);
+    %bk_my_left_m = zeros(size(table_m));
+    % variable 2
+    my_right_m = csvread(my_right_fname);
+    bk_my_right_m = csvread(bk_my_right_fname);
+    %bk_my_right_m = zeros(size(table_m));
+    % variable 3
+    other_left_m = csvread(other_left_fname);
+    bk_other_left_m = csvread(bk_other_left_fname);
+    % variable 4
+    other_right_m = csvread(other_right_fname);
+    bk_other_right_m = csvread(bk_other_right_fname);
+    % variable 5
+    pan_m = zeros(size(table_m));
+    % variable 6
+    trivet_m = zeros(size(table_m));
+    % variable 7
+    beer_box_m = csvread(beer_box_fname);
+    % variable 8
+    oatmeal_m = csvread(oatmeal_fname);
+    % variable 9
+    butter_m = csvread(butter_fname);
+    bk_butter_m = csvread(bk_butter_fname);
+    % variable 10
+    coffee_m = csvread(coffee_fname);
+    %bk_coffee_m = csvread(bk_coffee_fname);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%{
-    beer_box_fname = 'beer_box.csv';
-    oatmeal_fname = 'oatmeal.csv';
-    butter_fname = 'butter.csv';
-    coffee_fname = 'coffee.csv';
-    my_left_fname = 'my_left.csv';
-    my_right_fname = 'my_right.csv';
-    other_left_fname = 'other_left.csv';
-    other_right_fname = 'other_right.csv';
-    bk_my_right_fname = 'bk_my_right.csv';
-    bk_other_left_fname = 'bk_other_left.csv';
-    bk_other_right_fname = 'bk_other_right.csv';
-
-    beer_box_m = csvread(beer_box_fname);
-    oatmeal_m = csvread(oatmeal_fname);
-    butter_m = csvread(butter_fname);
-    coffee_m = csvread(coffee_fname);
-    my_left_m = csvread(my_left_fname);
-    my_right_m = csvread(my_right_fname);
-    other_left_m = csvread(other_left_fname);
-    other_right_m = csvread(other_right_fname);
-    bk_my_right_m = csvread(bk_my_right_fname);
-    bk_other_left_m = csvread(bk_other_left_fname);
-    bk_other_right_m = csvread(bk_other_right_fname);
-%}
 
     hand_types = {'my_left','my_right','your_left','your_right'};
     hand_colors = {'blue','yellow','red','green'};
 
-    objects = {'pan', 'trivet', 'table', 'pan', 'beer_box', 'butter', 'oatmeal', 'coffee'};
-    object_colors = {'magenta', 'cyan', 'black', 'white', rgb('Orange')*255, rgb('Pink')*255,  ...
-                     rgb('Olive')*255, rgb('Tan')*255};
+    objects = {'pan', 'trivet', 'table', 'beer_box', 'oatmeal', 'butter', 'coffee'};
+    object_colors = {'magenta', 'cyan', 'black', 'white', rgb('Orange')*255, rgb('Pink')*255, rgb('Tan')*255};
 
     % get number of frames
     [num_of_frames, bbx] = size(table_m);
@@ -330,7 +348,7 @@ function [] = final_results_after_tracking()
             if beer_box_m(f - beer_box_start, 3) > beer_box_thr
                 window = [beer_box_m(f - beer_box_start, 11) beer_box_m(f - beer_box_start, 12) ...
                           beer_box_m(f - beer_box_start, 6) beer_box_m(f - beer_box_start, 7)]; % turn into [x y width height] for rectint function
-                img = insertObjectAnnotation(img,'rectangle', window, objects{6}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{6}, 'LineWidth', 7);
+                img = insertObjectAnnotation(img,'rectangle', window, objects{4}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{4}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (beer_box_m(f - beer_box_start, 4) - ref_pos(1)) (beer_box_m(f - beer_box_start, 5) - ref_pos(2))]; 
                 prev_beer_box_pos = [(beer_box_m(f - beer_box_start, 4) - ref_pos(1)) (beer_box_m(f - beer_box_start, 5) - ref_pos(2))]; 
             else
@@ -347,7 +365,7 @@ function [] = final_results_after_tracking()
             if oatmeal_m(f - oatmeal_start, 3) > oatmeal_thr
                 window = [oatmeal_m(f - oatmeal_start, 11) oatmeal_m(f - oatmeal_start, 12) ...
                           oatmeal_m(f - oatmeal_start, 6) oatmeal_m(f - oatmeal_start, 7)]; % turn into [x y width height] for rectint function
-                img = insertObjectAnnotation(img,'rectangle', window, objects{3}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{3}, 'LineWidth', 7);
+                img = insertObjectAnnotation(img,'rectangle', window, objects{5}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{5}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (oatmeal_m(f - oatmeal_start, 4) - ref_pos(1)) (oatmeal_m(f - oatmeal_start, 5) - ref_pos(2))];
                 prev_oatmeal_pos = [(oatmeal_m(f - oatmeal_start, 4) - ref_pos(1)) (oatmeal_m(f - oatmeal_start, 5) - ref_pos(2))];
             else
@@ -364,9 +382,22 @@ function [] = final_results_after_tracking()
             if butter_m(f - butter_start, 3) > butter_thr
                 window = [butter_m(f - butter_start, 11) butter_m(f - butter_start, 12) ...
                           butter_m(f - butter_start, 6) butter_m(f - butter_start, 7)]; % turn into [x y width height] for rectint function
-                img = insertObjectAnnotation(img,'rectangle', window, objects{1}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{1}, 'LineWidth', 7);
+                img = insertObjectAnnotation(img,'rectangle', window, objects{6}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{6}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (butter_m(f - butter_start, 4) - ref_pos(1)) (butter_m(f - butter_start, 5) - ref_pos(2))];
                 prev_butter_pos = [(butter_m(f - butter_start, 4) - ref_pos(1)) (butter_m(f - butter_start, 5) - ref_pos(2))];
+            else
+                raw_pos = [raw_pos; prev_butter_pos];
+            end
+        end
+        % bk butter
+        %disp('Active points:');
+        if f <= butter_start 
+            if bk_butter_m(butter_start - f + 2, 3) > butter_thr
+                window = [bk_butter_m(butter_start - f + 2, 11) bk_butter_m(butter_start - f + 2, 12) ...
+                          bk_butter_m(butter_start - f + 2, 6) bk_butter_m(butter_start - f + 2, 7)]; % turn into [x y width height] for rectint function
+                img = insertObjectAnnotation(img,'rectangle', window, objects{6}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{6}, 'LineWidth', 7);
+                raw_pos = [raw_pos; (bk_butter_m(butter_start - f + 2, 4) - ref_pos(1)) (bk_butter_m(butter_start - f + 2, 5) - ref_pos(2))];
+                prev_butter_pos = [(bk_butter_m(butter_start - f + 2, 4) - ref_pos(1)) (bk_butter_m(butter_start - f + 2, 5) - ref_pos(2))]; 
             else
                 raw_pos = [raw_pos; prev_butter_pos];
             end
@@ -381,9 +412,22 @@ function [] = final_results_after_tracking()
             if coffee_m(f - coffee_start, 3) > coffee_thr
                 window = [coffee_m(f - coffee_start, 11) coffee_m(f - coffee_start, 12) ...
                           coffee_m(f - coffee_start, 6) coffee_m(f - coffee_start, 7)]; % turn into [x y width height] for rectint function
-                img = insertObjectAnnotation(img,'rectangle', window, objects{2}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{2}, 'LineWidth', 7);
+                img = insertObjectAnnotation(img,'rectangle', window, objects{7}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{7}, 'LineWidth', 7);
                 raw_pos = [raw_pos; (coffee_m(f - coffee_start, 4) - ref_pos(1)) (coffee_m(f - coffee_start, 5) - ref_pos(2))];
                 prev_coffee_pos = [(coffee_m(f - coffee_start, 4) - ref_pos(1)) (coffee_m(f - coffee_start, 5) - ref_pos(2))];
+            else
+                raw_pos = [raw_pos; prev_coffee_pos];
+            end
+        end
+        % bk coffee
+        %disp('Active points:');
+        if f <= coffee_start 
+            if bk_coffee_m(coffee_start - f + 2, 3) > coffee_thr
+                window = [bk_coffee_m(coffee_start - f + 2, 11) bk_coffee_m(coffee_start - f + 2, 12) ...
+                          bk_coffee_m(coffee_start - f + 2, 6) bk_coffee_m(coffee_start - f + 2, 7)]; % turn into [x y width height] for rectint function
+                img = insertObjectAnnotation(img,'rectangle', window, objects{7}, 'TextBoxOpacity',0.4,'FontSize',25, 'Color', object_colors{7}, 'LineWidth', 7);
+                raw_pos = [raw_pos; (bk_coffee_m(coffee_start - f + 2, 4) - ref_pos(1)) (bk_coffee_m(coffee_start - f + 2, 5) - ref_pos(2))];
+                prev_coffee_pos = [(bk_coffee_m(coffee_start - f + 2, 4) - ref_pos(1)) (bk_coffee_m(coffee_start - f + 2, 5) - ref_pos(2))]; 
             else
                 raw_pos = [raw_pos; prev_coffee_pos];
             end
