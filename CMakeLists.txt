@@ -14,10 +14,10 @@ find_package(catkin REQUIRED COMPONENTS
   find_object_2d
   tf
   image_geometry
-  moveit_core
-  moveit_msgs
-  moveit_ros_planning
-  moveit_ros_planning_interface
+#  moveit_core
+#  moveit_msgs
+#  moveit_ros_planning
+#  moveit_ros_planning_interface
   geometry_msgs
   cmake_modules
 )
@@ -252,11 +252,11 @@ target_link_libraries(baxter_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(baxter_motion ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(baxter_moveit_motion ${BAXTER_MOVEIT_MOTION_SOURCE_FILES} ${BAXTER_MOVEIT_MOTION_HEADER_FILES})
+#add_executable(baxter_moveit_motion ${BAXTER_MOVEIT_MOTION_SOURCE_FILES} ${BAXTER_MOVEIT_MOTION_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(baxter_moveit_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+#target_link_libraries(baxter_moveit_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
-add_dependencies(baxter_moveit_motion ${catkin_EXPORTED_TARGETS})
+#add_dependencies(baxter_moveit_motion ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(train_representation ${TRAIN_SOURCE_FILES} ${TRAIN_HEADER_FILES})
@@ -266,11 +266,11 @@ target_link_libraries(train_representation ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 add_dependencies(train_representation ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(future_prediction ${FUTURE_PREDICTION_SOURCE_FILES} ${FUTURE_PREDICTION_HEADER_FILES})
+#add_executable(future_prediction ${FUTURE_PREDICTION_SOURCE_FILES} ${FUTURE_PREDICTION_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(future_prediction ${catkin_LIBRARIES} ${Caffe_LIBRARIES})
+#target_link_libraries(future_prediction ${catkin_LIBRARIES} ${Caffe_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
-add_dependencies(future_prediction ${catkin_EXPORTED_TARGETS})
+#add_dependencies(future_prediction ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(publish_train_images src/publish_train_images_node.cpp)
