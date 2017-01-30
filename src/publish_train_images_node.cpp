@@ -11,6 +11,7 @@
 #include <std_msgs/UInt64.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <sensor_msgs/CameraInfo.h>
 
 #define SAVED_IMG "/home/leejang/data/hands/current_frame.jpg"
 
@@ -49,17 +50,21 @@ int main(int argc, char **argv)
     ros::Subscriber hand_sub = nh.subscribe("hand_detector/done", 1, handDetectionCB);
     ros::Subscriber obj_sub = nh.subscribe("objects", 1, objDetectionCB);
     // publishers
-    ros::Publisher frame_cnt_pub = nh.advertise<std_msgs::UInt64>("frame_cnt", 1);
-    image_pub = it.advertise("train/image", 1);
+    ros::Publisher frame_cnt_pub = nh.advertise<std_msgs::UInt64>("frame_cnt", 10);
+    //image_pub = it.advertise("train/image", 1);
+    image_pub = it.advertise("image", 1);
+    ros::Publisher image_info_pub = nh.advertise<sensor_msgs::CameraInfo>("camera_info", 1);
 
     // to open video file
     cv::VideoCapture capture_video;
 
     cv_bridge::CvImage out_msg;
     std_msgs::Header img_header;
+    sensor_msgs::CameraInfo img_info;
 
     // open video file
-    string videoFile = "/home/leejang/data/recorded_videos_on_0920_2016/scenario1/090720_0111.avi";
+    //string videoFile = "/home/leejang/data/recorded_videos_on_0920_2016/scenario1/090720_0111.avi";
+    string videoFile = "/data/share/8/X/%05d.jpg";
     capture_video.open(videoFile);
     cv::Mat frame;
 
@@ -69,7 +74,7 @@ int main(int argc, char **argv)
     //cv::namedWindow("Play recorded video", 1);
 
     // initialize frame count
-    frame_cnt.data = 0;
+    frame_cnt.data = 1;
 
     // waiting count
     unsigned int waiting_cnt = 0;
@@ -121,7 +126,7 @@ int main(int argc, char **argv)
 #endif
                     char filename[80];
                     sprintf(filename, "frame_%lu.jpg", frame_cnt.data);
-                    imwrite(filename, frame);
+                    //imwrite(filename, frame);
                     // for hand detector (saving current frame (overwrite))
                     imwrite(SAVED_IMG, frame);
                     cout << frame_cnt.data << endl;
@@ -130,6 +135,26 @@ int main(int argc, char **argv)
                     // sensor image header
                     img_header.seq = (double)capture_video.get(CV_CAP_PROP_POS_FRAMES);
                     img_header.stamp = ros::Time::now();
+                    // camera info
+                    img_info.header = img_header;
+                    img_info.width = frame.size().width;
+                    img_info.height = frame.size().height;
+                    img_info.distortion_model = "plumb_bob";
+
+                    // Qlippie Camera calibration
+                    //double intrinsic_params [] = {671.722, 0, 633.281, 0, 673.785, 378.107, 0, 0, 1};
+                    // JK Camera calibration
+                    double intrinsic_params [] = {870.105, 0, 970.753, 0, 880.417, 541.962, 0, 0, 1};
+                    for (int i = 0; i < 9; i++) {
+                        img_info.K[i] = intrinsic_params[i];
+                    }
+
+                    // Qlippie Camera calibration
+                    //double projection_params [] = {671.722, 0, 633.281, 0, 0, 673.785, 378.107, 0, 0, 0, 1, 0};
+                    double projection_params [] = {870.105, 0, 970.753, 0, 0, 880.417, 541.962, 0, 0, 0, 1, 0};
+                    for (int i = 0; i < 12; i++) {
+                        img_info.P[i] = projection_params[i];
+                    }
 
                     out_msg.header = img_header;
                     out_msg.encoding = sensor_msgs::image_encodings::BGR8;
@@ -138,8 +163,9 @@ int main(int argc, char **argv)
                     // publish
                     //ros::Duration(5).sleep();
                     image_pub.publish(out_msg.toImageMsg());
+                    image_info_pub.publish(img_info);
                     frame_cnt_pub.publish(frame_cnt);
-                    has_to_publish = false;
+                    //has_to_publish = false;
                     frame_cnt.data++;
                 }
             } // else

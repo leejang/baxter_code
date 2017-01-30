@@ -279,6 +279,13 @@ target_link_libraries(publish_train_images ${catkin_LIBRARIES} ${OpenCV_LIBRARIE
 ## Add cmake target dependencies of the executable/library
 add_dependencies(publish_train_images ${catkin_EXPORTED_TARGETS})
 
+## Declare a C++ executable
+add_executable(record_visual_odometry src/record_visual_odometry_node.cpp)
+## Specify libraries to link a library or executable target against
+target_link_libraries(record_visual_odometry ${catkin_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(record_visual_odometry ${catkin_EXPORTED_TARGETS})
+
 #############
 ## Install ##
 #############

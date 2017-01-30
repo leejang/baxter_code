@@ -9,7 +9,7 @@ layer {
   }
   hdf5_data_param {
     source: "/home/leejang/data/recorded_videos_on_0920_2016/train_list.txt"
-    batch_size: 10
+    batch_size: 30
   }
 }
 layer {
@@ -22,7 +22,7 @@ layer {
   }
   hdf5_data_param {
     source: "/home/leejang/data/recorded_videos_on_0920_2016/test.txt"
-    batch_size: 1
+    batch_size: 10
   }
 }
 layer {
@@ -30,8 +30,16 @@ layer {
   type: "InnerProduct"
   bottom: "data"
   top: "fc1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
   inner_product_param {
-    num_output: 4096
+    num_output:128
     weight_filler {
       type: "xavier"
     }
@@ -52,8 +60,16 @@ layer {
   type: "InnerProduct"
   bottom: "fc1"
   top: "fc2"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
   inner_product_param {
-    num_output: 4096
+    num_output: 64
     weight_filler {
       type: "xavier"
     }
@@ -70,21 +86,20 @@ layer {
   top: "fc2"
 }
 layer {
-  name: "drop2"
-  type: "Dropout"
-  bottom: "fc2"
-  top: "fc2"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
-layer {
   name: "fc3"
   type: "InnerProduct"
   bottom: "fc2"
   top: "fc3"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
   inner_product_param {
-    num_output: 20
+    num_output: 32
     weight_filler {
       type: "xavier"
     }
@@ -101,12 +116,39 @@ layer {
   top: "fc3"
 }
 layer {
+  name: "fc4"
+  type: "InnerProduct"
+  bottom: "fc3"
+  top: "fc4"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 20
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.1
+    }
+  }
+}
+layer {
+  name: "relu4"
+  type: "ReLU"
+  bottom: "fc4"
+  top: "fc4"
+}
+layer {
   name: "loss"
   type: "EuclideanLoss"
-  bottom: "fc3"
+  bottom: "fc4"
   bottom: "label"
   top: "loss"
-  include {
-    phase: TRAIN
-  }
 }
