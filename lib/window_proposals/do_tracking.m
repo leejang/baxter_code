@@ -1,3 +1,5 @@
+% This function is used for finding
+% the first frame of detected objects for tracking
 function [] = do_tracking()
 
     % for mapping object id to its name

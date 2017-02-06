@@ -165,6 +165,16 @@ set(FUTURE_PREDICTION_HEADER_FILES
   src/baxter_moveit_controller.h
 )
 
+# Making Robot Training Data
+set(MAKING_ROBOT_TRAIN_D_SOURCE_FILES
+  src/making_robot_training_data.cpp
+  src/making_robot_training_data_node.cpp
+)
+
+set(MAKING_ROBOT_TRAIN_D_HEADER_FILES
+  src/making_robot_training_data.h
+)
+
 # For OpenCV
 find_package(OpenCV)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -285,6 +295,13 @@ add_executable(record_visual_odometry src/record_visual_odometry_node.cpp)
 target_link_libraries(record_visual_odometry ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(record_visual_odometry ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(make_robot_train_d ${MAKING_ROBOT_TRAIN_D_SOURCE_FILES} ${MAKING_ROBOT_TRAIN_D_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(make_robot_train_d ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(make_robot_train_d ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
