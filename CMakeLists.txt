@@ -241,11 +241,11 @@ target_link_libraries(kinect_viewer ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(kinect_viewer ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADER_FILES})
+#add_executable(hand_detector ${HAND_DETECTOR_SOURCE_FILES} ${HAND_DETECTOR_HEADER_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hand_detector ${catkin_LIBRARIES} ${Caffe_LIBRARIES} ${MATLAB_LIBRARIES})
+#target_link_libraries(hand_detector ${catkin_LIBRARIES} ${Caffe_LIBRARIES} ${MATLAB_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
-add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
+#add_dependencies(hand_detector ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(skeleton_tracker ${SKELETON_TRACKER_SOURCE_FILES} ${SKELETON_TRACKER_HEADER_FILES})
@@ -297,11 +297,11 @@ target_link_libraries(record_visual_odometry ${catkin_LIBRARIES})
 add_dependencies(record_visual_odometry ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(make_robot_train_d ${MAKING_ROBOT_TRAIN_D_SOURCE_FILES} ${MAKING_ROBOT_TRAIN_D_FILES})
+#add_executable(make_robot_train_d ${MAKING_ROBOT_TRAIN_D_SOURCE_FILES} ${MAKING_ROBOT_TRAIN_D_FILES})
 ## Specify libraries to link a library or executable target against
-target_link_libraries(make_robot_train_d ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+#target_link_libraries(make_robot_train_d ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
-add_dependencies(make_robot_train_d ${catkin_EXPORTED_TARGETS})
+#add_dependencies(make_robot_train_d ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
