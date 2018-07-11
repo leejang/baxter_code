@@ -1,8 +1,10 @@
 <launch>
+<!--
     <include file="/opt/ros/kinetic/share/freenect_launch/launch/freenect.launch">
     <arg name="rgb_frame_id" value="camera_rgb_optical_frame" />
     <arg name="depth_frame_id" value="camera_depth_optical_frame" />
     </include>
+-->
 <!--
     <include file="/opt/ros/indigo/share/openni_launch/launch/openni.launch">
     <arg name="rgb_frame_id" value="camera_rgb_optical_frame" />
@@ -10,16 +12,24 @@
     </include>
 -->
 
+<!--
     <node name="kinect_viewer" pkg="baxter_learning_from_egocentric_video" type="kinect_viewer">
     </node>
-
+-->
+<!--
     <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.280 0.050 0.230 0.011 0.242 0.006 0.970 /world /camera_link 10" />
+-->
 <!--
     <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.280 0.050 0.230 -0.970 0.002 0.242 0.008 /world /camera_link 10" />
 -->
 <!--
     <node pkg="tf" type="static_transform_publisher" name="kinectTransformer" args="0.323 0.050 0.405 -0.523 0.389 -0.305 -0.694 /world /camera_link 10" />
 -->
+<!--
     <include file="/home/leejang/ros_ws/src/find-object/launch/find_object_3d.launch">
     </include>
+-->
+
+    <node pkg="tf" type="static_transform_publisher" name="ZedTransformer" args="0.280 0.050 0.230 0.011 0.242 0.006 0.970 /world /camera_link 10" />
+
 </launch>
