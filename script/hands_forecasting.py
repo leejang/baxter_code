@@ -15,6 +15,7 @@ os.chdir(caffe_root)
 sys.path.insert(0, 'python')
 
 import caffe
+import re
 
 # for Caffe
 from google.protobuf import text_format
@@ -23,9 +24,11 @@ from caffe.proto import caffe_pb2
 # for ROS
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
-
-import re
+from baxter_core_msgs.msg import EndpointState
+import image_geometry
+import tf
 
 labelmap_file = 'data/egohands_future/labelmap_voc.prototxt'
 file = open(labelmap_file, 'r')
@@ -71,8 +74,22 @@ class hands_forecasting:
 
     def __init__(self):
      self.bridge = CvBridge()
-     self.image_sub = rospy.Subscriber("/zed/rgb/image_rect_color", Image, self.img_callback) 
-     self.gesture_pub = rospy.Publisher("forecasting/gesture", String, queue_size=10)
+     #############################################################
+     # subscribers
+     self.image_sub = rospy.Subscriber("/zed/rgb/image_rect_color", Image, self.img_callback)
+     self.left_end_sub = rospy.Subscriber("/robot/limb/left/endpoint_state", EndpointState, self.left_end_cb)
+     self.right_end_sub = rospy.Subscriber("/robot/limb/right/endpoint_state", EndpointState, self.right_end_cb)
+     self.camera_info_sub = rospy.Subscriber("/zed/rgb/camera_info", CameraInfo, self.cam_info_cb)
+     #self.camera_info_sub = rospy.Subscriber("/zed/depth/camera_info", CameraInfo, self.cam_info_cb)
+
+     ##############################################################
+     # pubishers
+     self.screen_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+
+     # listner for TF
+     self.listener = tf.TransformListener()
+
+     #self.gesture_pub = rospy.Publisher("forecasting/gesture", String, queue_size=10)
      self.lock = threading.Lock()
      self.net = caffe.Net(model_def,      # defines the structure of the mode
                           model_weights,  # contains the trained weights
@@ -106,6 +123,16 @@ class hands_forecasting:
       except CvBridgeError, e:
         print e
 
+      try:
+        #self.listener.waitForTransform('/camera_link', '/left_gripper_base', rospy.Time.now(), rospy.Duration(3.0))        
+        #(trans, rot) = self.listener.lookupTransform('/camera_link', '/left_gripper_base', rospy.Time(0))        
+        #(self.trans, self.rot) = self.listener.lookupTransform('/world', '/left_gripper_base', rospy.Time(0))
+        # parameters: target_frame, soource frame, time
+        # returns, position as a translation (x,y,z) and orientations (x,y,z,w)
+        (self.my_left_trans, self.my_left_rot) = self.listener.lookupTransform('/zed_depth_camera', '/left_gripper_base', rospy.Time(0))        
+      except (tf.LookupException, tf.ConnectivityException), e:
+        print e
+
       # write image
       target_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
       #target_image = '/home/leejang/ros_ws/src/forecasting_gestures/script/'+str(self.image_cnt)+'.jpg'
@@ -124,9 +151,24 @@ class hands_forecasting:
       #print("Proesssed in {:.3f} seconds.".format(time.time() - t))
 
       self.lock.acquire()
-      self.do_hands_forecasting();
+      self.do_hands_forecasting()
       self.lock.release()
 
+    def cam_info_cb(self,data):
+      # camera model
+      self.cam_model = image_geometry.PinholeCameraModel()
+      self.cam_model.fromCameraInfo(data)
+      #print('cam info callback!')
+
+      # processing time check
+    def left_end_cb(self, msg):
+      tt = 1
+      #print('left end state callback!')
+
+    def right_end_cb(self, msg):
+      tt = 1
+      #print('right end state callback!')
+    
     def do_hands_forecasting(self):
 
       caffe.set_device(0)
@@ -136,6 +178,24 @@ class hands_forecasting:
       t = time.time()
 
       print('start hands forecasting!')
+
+      cur_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
+
+      # screen test
+      cv_img = cv2.imread(cur_image)
+      #cv2.putText(cv_img, 'Hana and Yuna\' Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
+
+      #print (self.trans[0], self.trans[1], self.trans[2])
+      self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
+
+      print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
+
+      # RED (9,0,255) BGR in CV::Mat
+      cv2.circle(cv_img, (int(self.my_left_2d[0]), int(self.my_left_2d[1])), 10, (0,0,255), -1)
+ 
+      # to publish image on Baxter's screen
+      img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
+      self.screen_pub.publish(img_msg)
 
       # resize (batch,dim,height,width)
       #net.blobs['data'].reshape(1,3,360,640)
