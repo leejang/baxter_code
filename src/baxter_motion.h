@@ -11,6 +11,7 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include "baxter_controller.h"
+#include "baxter_learning_from_egocentric_video/Target.h"
 
 class BaxterMotion
 {
@@ -18,28 +19,18 @@ public:
     BaxterMotion(ros::NodeHandle nh);
     ~BaxterMotion();
 
-    // handle timer interrupt
-    void mimicOnTimerTick(const ros::TimerEvent& e);
-    void followOnTimerTick(const ros::TimerEvent& e);
-
     // Baxter Controller
     BaxterController *baxter_ctrl;
 private:
     ros::NodeHandle nh;
 
+    ros::Subscriber right_target_sub;
+
     tf::TransformListener tfListener;
 
-    //Transforms declared for each joint
-    tf::StampedTransform tf_left_hand, tf_right_hand;
-    // tf points declaration for storing 3D coordinates of joints
-    tf::Point left_hand_pt, right_hand_pt;
+    // callback functions
+    void rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg);
 
-    bool tf_exist;
-
-    unsigned int mission_cnt;
-
-    double set_left_hand_pos[3];
-    double set_right_hand_pos[3];
 };
 
 #endif

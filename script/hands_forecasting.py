@@ -25,6 +25,7 @@ from caffe.proto import caffe_pb2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
+from baxter_learning_from_egocentric_video.msg import Target
 from cv_bridge import CvBridge, CvBridgeError
 from baxter_core_msgs.msg import EndpointState
 import image_geometry
@@ -85,10 +86,16 @@ class hands_forecasting:
      ##############################################################
      # pubishers
      self.screen_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+     self.detection_pub = rospy.Publisher('/detection/right/target_pos', Target)
 
      # listner for TF
      self.listener = tf.TransformListener()
 
+     # Target Psition to move Baxter Hands
+     self.right_target_msg = Target()
+     self.right_target_msg.x = 0
+     self.right_target_msg.y = 0
+ 
      #self.gesture_pub = rospy.Publisher("forecasting/gesture", String, queue_size=10)
      self.lock = threading.Lock()
      self.net = caffe.Net(model_def,      # defines the structure of the mode
@@ -130,6 +137,7 @@ class hands_forecasting:
         # parameters: target_frame, soource frame, time
         # returns, position as a translation (x,y,z) and orientations (x,y,z,w)
         (self.my_left_trans, self.my_left_rot) = self.listener.lookupTransform('/zed_depth_camera', '/left_gripper_base', rospy.Time(0))        
+        (self.my_right_trans, self.my_right_rot) = self.listener.lookupTransform('/zed_depth_camera', '/right_gripper_base', rospy.Time(0))        
       except (tf.LookupException, tf.ConnectivityException), e:
         print e
 
@@ -149,6 +157,11 @@ class hands_forecasting:
       #print('img_calback')
       #print("image_cnt {:d} .".format(self.image_cnt))
       #print("Proesssed in {:.3f} seconds.".format(time.time() - t))
+
+      self.right_target_msg.x += 1
+      self.right_target_msg.y += 1
+
+      self.detection_pub.publish(self.right_target_msg)
 
       self.lock.acquire()
       self.do_hands_forecasting()
@@ -183,15 +196,19 @@ class hands_forecasting:
 
       # screen test
       cv_img = cv2.imread(cur_image)
-      #cv2.putText(cv_img, 'Hana and Yuna\' Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
+      #cv2.putText(cv_img, 'Hana and Yuna\'s Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
 
       #print (self.trans[0], self.trans[1], self.trans[2])
       self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
+      self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
 
-      print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
+      #print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
 
+      # Get Current Baxter Hands position in 2D
       # RED (9,0,255) BGR in CV::Mat
       cv2.circle(cv_img, (int(self.my_left_2d[0]), int(self.my_left_2d[1])), 10, (0,0,255), -1)
+      # BLUE (255,0,0)
+      cv2.circle(cv_img, (int(self.my_right_2d[0]), int(self.my_right_2d[1])), 10, (255,0,0), -1)
  
       # to publish image on Baxter's screen
       img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")

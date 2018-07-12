@@ -20,8 +20,20 @@ find_package(catkin REQUIRED COMPONENTS
 #  moveit_ros_planning_interface
   geometry_msgs
   cmake_modules
+  message_generation
 )
 
+## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  Target.msg
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -56,6 +68,7 @@ catkin_package(
 #  LIBRARIES baxter_learning_from_egocentric_video
 #  CATKIN_DEPENDS baxter_core_msgs, cv_bridge, image_transport roscpp, sensor_msgs, std_msgs,
 #  DEPENDS system_lib
+   CATKIN_DEPENDS message_runtime
 )
 
 ###########
