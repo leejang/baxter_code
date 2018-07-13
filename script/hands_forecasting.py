@@ -203,6 +203,7 @@ class hands_forecasting:
       self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
 
       #print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
+      print (int(self.my_right_2d[0]), int(self.my_right_2d[1]))
 
       # Get Current Baxter Hands position in 2D
       # RED (9,0,255) BGR in CV::Mat

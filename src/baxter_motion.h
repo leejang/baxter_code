@@ -11,6 +11,8 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include "baxter_controller.h"
+//#include <geometry_msgs/Pose.h>
+//#include "baxter_moveit_controller.h"
 #include "baxter_learning_from_egocentric_video/Target.h"
 
 class BaxterMotion
@@ -21,6 +23,10 @@ public:
 
     // Baxter Controller
     BaxterController *baxter_ctrl;
+    //BaxterMoveitController *baxter_moveit_ctrl;
+
+    void right_move_test(int img_x, int img_y);
+
 private:
     ros::NodeHandle nh;
 
@@ -31,6 +37,13 @@ private:
     // callback functions
     void rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg);
 
+    //geometry_msgs::Pose target_pose_right;
+
+    // positions, orientations
+    double goal_right_pos[3], goal_right_ori[4];
+
+    // test functions
+    void right_move_test();
 };
 
 #endif
