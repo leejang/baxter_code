@@ -184,8 +184,6 @@ for test_img in sorted(glob.glob(file_path), key=key_func):
             if (xmax > 1920):
                 xmax = 1920
 
-            ###############################################
-            # save output imag
             cv2.rectangle(img, (xmin, ymin), (xmax, ymax), color, 3)
             
             if ymin < 10:
@@ -193,9 +191,11 @@ for test_img in sorted(glob.glob(file_path), key=key_func):
             else:
                 cv2.putText(img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
 
-            sv_img = img_sv_path + "/result_" + base_name + '.jpg'
 
-            cv2.imwrite(sv_img, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-            print("Proesssed in {:.3f} seconds.".format(time.time() - t))
+        ###############################################
+        # save output imag
+        sv_img = img_sv_path + "/result_" + base_name + '.jpg'
+        cv2.imwrite(sv_img, img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        print("Proesssed in {:.3f} seconds.".format(time.time() - t))
 
 print("done!!")
