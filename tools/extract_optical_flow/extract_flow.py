@@ -70,19 +70,25 @@ def extract_flow(path, key_func):
 
         if int_cnt == 1:
             frame1 = cv2.imread(cur_img)
+            hsv = np.zeros_like(frame1)
+            hsv[...,1] = 255
             prev_name = base_name
         else:
             frame2 = cv2.imread(cur_img)
 
             prvs = cv2.cvtColor(frame1,cv2.COLOR_BGR2GRAY)
             next = cv2.cvtColor(frame2,cv2.COLOR_BGR2GRAY)
-            hsv = np.zeros_like(frame1)
-            hsv[...,1] = 255
 
             flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-            mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
+            #flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 100, 3, 7, 1.5, 0)
+            horz = cv2.normalize(flow[...,0], None, 0, 1, cv2.NORM_MINMAX)     
+            vert = cv2.normalize(flow[...,1], None, 0, 1, cv2.NORM_MINMAX)
+            mag, ang = cv2.cartToPolar(horz, vert)
             hsv[...,0] = ang*180/np.pi/2
             hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+            #print hsv[...,2]
+            temp = hsv[...,2].sum()
+            print temp 
             rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
 
             horz = cv2.normalize(flow[...,0], None, 0, 255, cv2.NORM_MINMAX)     
@@ -100,7 +106,7 @@ def extract_flow(path, key_func):
             cv2.imwrite(flow_xy, rgb)
 
             # update the previous frame
-            frame1 = cv2.imread(cur_img)
+            frame1 = frame2
             prev_name = base_name
 
         # increase cnt
@@ -110,7 +116,7 @@ def extract_flow(path, key_func):
 ###############################################
 # Main
 ###############################################
-target_dir = "/data/leejang/recorded_videos_on_0830_2016/scenario1"
+target_dir = "/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/new_robot_video/"
 
 subdirs = [x[0] for x in os.walk(target_dir)]
 
@@ -120,11 +126,12 @@ for subdir in subdirs:
 
     #print path
     #print folder
-    if folder.isdigit():
-      print subdir
-      print "---------------------"
-      # extract optical flow
-      extract_flow(subdir, key_func)
+    #if folder.isdigit():
+
+    print subdir
+    print "---------------------"
+    # extract optical flow
+    extract_flow(subdir, key_func)
 
 
 

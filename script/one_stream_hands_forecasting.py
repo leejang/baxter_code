@@ -67,9 +67,6 @@ model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/VGGNet/egohands/SSD_BE
 reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_con10_test.prototxt'
 reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_iter_100000.caffemodel'
 
-reg_net = caffe.Net(reg_model_def,      # defines the structure of the model
-                reg_model_weights,  # contains the trained weights
-                caffe.TEST)     # use test mode (e.g., don't perform dropout)
 
 class hands_forecasting:
 
@@ -77,7 +74,7 @@ class hands_forecasting:
      self.bridge = CvBridge()
      #############################################################
      # subscribers
-     self.image_sub = rospy.Subscriber("/zed/rgb/image_rect_color", Image, self.img_callback)
+     self.image_sub = rospy.Subscriber("/zed/rgb/image_rect_color", Image, self.img_callback, queue_size=1000)
      self.left_end_sub = rospy.Subscriber("/robot/limb/left/endpoint_state", EndpointState, self.left_end_cb)
      self.right_end_sub = rospy.Subscriber("/robot/limb/right/endpoint_state", EndpointState, self.right_end_cb)
      self.camera_info_sub = rospy.Subscriber("/zed/rgb/camera_info", CameraInfo, self.cam_info_cb)
@@ -86,7 +83,7 @@ class hands_forecasting:
      ##############################################################
      # pubishers
      self.screen_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
-     self.detection_pub = rospy.Publisher('/detection/right/target_pos', Target)
+     self.detection_pub = rospy.Publisher('/detection/right/target_pos',Target)
 
      # listner for TF
      self.listener = tf.TransformListener()
@@ -95,12 +92,16 @@ class hands_forecasting:
      self.right_target_msg = Target()
      self.right_target_msg.x = 0
      self.right_target_msg.y = 0
- 
-     #self.gesture_pub = rospy.Publisher("forecasting/gesture", String, queue_size=10)
+
      self.lock = threading.Lock()
+
      self.net = caffe.Net(model_def,      # defines the structure of the mode
                           model_weights,  # contains the trained weights
                           caffe.TEST)     # use test mode (e.g., don't perform dropout)
+
+     self.reg_net = caffe.Net(reg_model_def,      # defines the structure of the model
+                              reg_model_weights,  # contains the trained weights
+                              caffe.TEST)         # use test mode (e.g., don't perform dropout)
 
      # input preprocessing: 'data' is the name of the input blob == net.inputs[0]
      self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
@@ -145,27 +146,25 @@ class hands_forecasting:
       target_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
       #target_image = '/home/leejang/ros_ws/src/forecasting_gestures/script/'+str(self.image_cnt)+'.jpg'
       #print target_image
-      #cv2.imwrite(target_image, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+      cv2.imwrite(target_image, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
       # crop image
       #crop_img = self.cv_image[0:360, 0:640]
       #cv2.imwrite(target_image, crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
-      cv2.imwrite(target_image, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-      self.image_cnt += 1
+      #cv2.imwrite(target_image, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+      #self.image_cnt += 1
 
-      #print('img_calback')
+      print('img_calback')
       #print("image_cnt {:d} .".format(self.image_cnt))
       #print("Proesssed in {:.3f} seconds.".format(time.time() - t))
 
-      self.right_target_msg.x += 1
-      self.right_target_msg.y += 1
-
-      self.detection_pub.publish(self.right_target_msg)
 
       self.lock.acquire()
       self.do_hands_forecasting()
       self.lock.release()
+
+      self.image_cnt += 1
 
     def cam_info_cb(self,data):
       # camera model
@@ -193,6 +192,14 @@ class hands_forecasting:
       print('start hands forecasting!')
 
       cur_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
+      rhand_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/rhand_new.jpg'
+
+      cur_image_w_r = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image_w_r.jpg'
+
+      #new_target_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/new_robot_video/0110/'+str(self.image_cnt)+'.jpg'
+
+      # img_size: 142 x 108
+      rhand_cv_img = cv2.imread(rhand_image)
 
       # screen test
       cv_img = cv2.imread(cur_image)
@@ -203,23 +210,41 @@ class hands_forecasting:
       self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
 
       #print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
-      print (int(self.my_right_2d[0]), int(self.my_right_2d[1]))
+      #print (int(self.my_right_2d[0]), int(self.my_right_2d[1]))
 
       # Get Current Baxter Hands position in 2D
       # RED (9,0,255) BGR in CV::Mat
-      cv2.circle(cv_img, (int(self.my_left_2d[0]), int(self.my_left_2d[1])), 10, (0,0,255), -1)
+      #cv2.circle(cv_img, (int(self.my_left_2d[0]), int(self.my_left_2d[1])), 10, (0,0,255), -1)
       # BLUE (255,0,0)
-      cv2.circle(cv_img, (int(self.my_right_2d[0]), int(self.my_right_2d[1])), 10, (255,0,0), -1)
- 
+      #cv2.circle(cv_img, (int(self.my_right_2d[0]), int(self.my_right_2d[1])), 10, (255,0,0), -1)
+
+      rhand_center_x = int(self.my_right_2d[0])
+      rhand_center_y = int(self.my_right_2d[1])
+
+      #print rhand_cv_img.shape
+      #print rhand_center_x, rhand_center_y
+
+      if (rhand_center_x > 71) and (rhand_center_y > 54):
+        y_min = rhand_center_y - 54
+        y_max = rhand_center_y + 54
+        x_min = rhand_center_x - 71
+        x_max = rhand_center_x + 71
+
+        if (y_max < 640) and (x_max < 1280):
+          cv_img[y_min:y_max, x_min:x_max] = rhand_cv_img[0:108, 0:142]
+
+      cv2.imwrite(cur_image_w_r, cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+      #cv2.imwrite(cur_image, cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+
       # to publish image on Baxter's screen
-      img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
-      self.screen_pub.publish(img_msg)
+      #img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
+      #self.screen_pub.publish(img_msg)
 
       # resize (batch,dim,height,width)
       #net.blobs['data'].reshape(1,3,360,640)
-      """
+
       # load image
-      cur_image = '/home/leejang/ros_ws/src/forecasting_gestures/cur_image/cur_image.jpg'
+      cur_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image_w_r.jpg'
       image = caffe.io.load_image(cur_image)
 
       transformed_image = self.transformer.preprocess('data', image)
@@ -242,10 +267,10 @@ class hands_forecasting:
 
         # do regression
         # con
-        reg_net.blobs['data'].data[...] = self.con_extract_features
+        self.reg_net.blobs['data'].data[...] = self.con_extract_features
         # single
-        #reg_net.blobs['data'].data[...] = extract_features
-        future_features = reg_net.forward()['fc2']
+        #self.reg_net.blobs['data'].data[...] = extract_features
+        future_features = self.reg_net.forward()['fc2']
         #print type(future_features)
 
         # delete the oldest extracted features in concatanated feature maps
@@ -266,7 +291,6 @@ class hands_forecasting:
 
         # Get detections with confidence higher than 0.65.
         top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
-        #top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.99]
 
         top_conf = det_conf[top_indices]
         top_label_indices = det_label[top_indices].tolist()
@@ -275,6 +299,8 @@ class hands_forecasting:
         top_ymin = det_ymin[top_indices]
         top_xmax = det_xmax[top_indices]
         top_ymax = det_ymax[top_indices]
+
+        colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,102,0), (102,0,204), (204,102,0), (255,102,204), (0,255,255)]
 
         for i in xrange(top_conf.shape[0]):
           xmin = int(round(top_xmin[i] * image.shape[1]))
@@ -290,20 +316,54 @@ class hands_forecasting:
           coords = xmin, ymin, xmax-xmin+1, ymax-ymin+1
           centers = (xmin + xmax)/2, (ymin + ymax)/2
 
-          # publish gesture topic
-          self.gesture_pub.publish(label_name)
+          if label_name == 'my_left':
+            # Red
+            color = colors[2]
+          elif label_name == 'my_right':
+            # Blue
+            color = colors[0]
+          elif label_name == 'your_left':
+            # Green
+            color = colors[1]
+          else:
+            # Cyan
+            color = colors[3]
+
+          # to prevent bounding box is locatd out of image size
+          if (ymin < 0):
+            ymin = 0
+          if (ymax > 1080):
+            ymax = 1080
+          if (xmin < 0):
+            xmin = 0
+          if (xmax > 1920):
+            xmax = 1920
+
+          # draw bounding boxes
+          cv2.rectangle(cv_img, (xmin, ymin), (xmax, ymax), color, 3)
+          # put lable names
+          if ymin < 10:
+            cv2.putText(cv_img, text, (xmin, ymin + 20), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+          else:
+            cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+
+          # publish detection topic
+          #self.detection_pub.publish(self.right_target_msg)
+
+      # to publish image on Baxter's screen
+      img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
+      self.screen_pub.publish(img_msg)
 
       print("Proesssed in {:.3f} seconds.".format(time.time() - t))
-      """
       self.gesture_cnt += 1
 
 def main(args):
     print 'initialize hands forecasting node (python)'
 
-    gesture_node = hands_forecasting()
-    rospy.init_node('hands_forecasting', anonymous=True)
-    
+    rospy.init_node('hands_forecasting_node', anonymous=True)
+
     try:
+      hands_forcasting_node = hands_forecasting()
       rospy.spin()
     except KeyboardInterrupt:
       print "Shutting down"
