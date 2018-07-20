@@ -43,6 +43,13 @@ BaxterMotion::BaxterMotion(ros::NodeHandle nh)
 
     right_target_sub =
         nh.subscribe("/detection/right/target_pos", 10, &BaxterMotion::rightTargetCB, this);
+
+    right_target_joints_sub =
+        nh.subscribe("/detection/right/target_joints", 10, &BaxterMotion::rightTargetJointsCB, this);
+
+    center_left_cnt = 0;
+
+    total_target_cnt = 0;
 }
 
 BaxterMotion::~BaxterMotion()
@@ -53,12 +60,75 @@ BaxterMotion::~BaxterMotion()
 
 void BaxterMotion::rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg)
 {
-    ROS_INFO("I hread: [%d %d]", msg->x, msg->y);
+    ROS_INFO("[%d] I hread: [%d %d]", total_target_cnt, msg->x, msg->y);
+
+    if ((msg->x > 600) && (msg->x < 900)) {
+        center_left_cnt++;
+    }
+
+    ROS_INFO("center_left_cnt: [%d]", center_left_cnt);
+
+    if (total_target_cnt > 100) {
+      baxter_ctrl->moveToNeutral();
+    } else if ((center_left_cnt > 1) && (center_left_cnt <= 4)) {
+
+      double right_end[] = {0.8509758420794333, -0.5763932810479442,0.0337475773334791, 1.3004322129298596, 1.363708920430133, 0.5000777368506448, 0.4693981210929366};
+      baxter_ctrl->moveRightToJointPositions(right_end);
+    } else if ((center_left_cnt > 4) && (center_left_cnt <= 7)) {
+      double right_end[] = {0.9970875121255189, -0.10162622719740866, 0.02454369260616662, 0.4751505490475069, 1.3675438723998463, 0.2151408055009293, 0.47246608266870743};
+      //baxter_ctrl->moveRightToJointPositions(right_end);
+    } else {
+      right_move_test(msg->x, msg->y);
+    }
+
+    total_target_cnt++;
+    usleep(500);
 }
+
+void BaxterMotion::rightTargetJointsCB(const baxter_learning_from_egocentric_video::TargetJointsConstPtr &msg)
+{
+    ROS_INFO("[%d] I hread: [%f %f %f %f %f %f %f]",
+              msg->joints[0], msg->joints[1], msg->joints[2],
+              msg->joints[3], msg->joints[4], msg->joints[5], msg->joints[6]);
+}
+
+// for scenario 1
+# if 0
+void BaxterMotion::rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg)
+{
+    ROS_INFO("I hread: [%d %d]", msg->x, msg->y);
+
+    // 600, the center value in image x
+    if (msg->x > 600) {
+        center_left_cnt++;
+    }
+
+    ROS_INFO("center_left_cnt: [%d]", center_left_cnt);
+
+    if ((center_left_cnt > 5) && (center_left_cnt <= 15)) {
+      baxter_ctrl->moveRightHandTo(goal_right_pos, goal_right_ori);
+      // move to right end to left most
+      double right_end[] = {1.3334127998693959, 0.14764565083397108, 0.1284708909854034, 0.09050486648523941, 1.6225681783857964, 0.08628641931855452, 0.2231942046373277};
+      baxter_ctrl->moveRightToJointPositions(right_end);
+      
+      ROS_INFO("Here I am!!");
+
+    } else if (center_left_cnt > 15) {
+      // move to right end to left most
+      double right_end[] = {0.49854375606275947, 0.21207284392515846, -0.4195437454866607, -0.041033986075934815, 0.32597091742565043, 0.026461168591023387, -3.0591411862404865};
+      baxter_ctrl->moveRightToJointPositions(right_end);
+    } 
+    else {
+      right_move_test(msg->x, msg->y);
+    }
+
+    usleep(500);
+}
+#endif
 
 void BaxterMotion::right_move_test(int img_x, int img_y)
 {
-    ROS_INFO("Right Move Test Function");
+    //ROS_INFO("Right Move Test Function");
 
     double new_arm_x = 0;
     double new_arm_y = 0;
@@ -79,6 +149,17 @@ void BaxterMotion::right_move_test(int img_x, int img_y)
 
     // send commands to move hands
     baxter_ctrl->moveRightHandTo(goal_right_pos, goal_right_ori);
+
+    // right most
+    //double right_end[] = {0.49854375606275947, 0.21207284392515846, -0.4195437454866607, -0.041033986075934815, 0.32597091742565043, 0.026461168591023387, -3.0591411862404865};
+
+    // left most
+    //double right_end[] = {1.4442429117941171, 0.19980099762207515, -0.28723790253154374, 0.023776702212223912, 3.057607205452601, -0.012655341500054663, -2.954446997467307};
+
+    // appraching center
+    //double right_end[] = {0.8509758420794333, -0.5763932810479442,0.0337475773334791, 1.3004322129298596, 1.363708920430133, 0.5000777368506448, 0.4693981210929366};
+    //baxter_ctrl->moveRightToJointPositions(right_end);
+
 }
 
 int main(int argc, char **argv)
@@ -92,7 +173,9 @@ int main(int argc, char **argv)
     // mimic motion node
     BaxterMotion baxter_motion(nh);
 
-    baxter_motion.right_move_test(800, 600);
+    //baxter_motion.right_move_test(800, 600);
+    // table center
+    //baxter_motion.right_move_test(607, 504);
 
     ros::spin();
 

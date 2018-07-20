@@ -8,12 +8,14 @@
 #ifndef BAXTER_MOTION_H_
 #define BAXTER_MOTION_H_
 
+#include <unistd.h>
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include "baxter_controller.h"
 //#include <geometry_msgs/Pose.h>
 //#include "baxter_moveit_controller.h"
 #include "baxter_learning_from_egocentric_video/Target.h"
+#include "baxter_learning_from_egocentric_video/TargetJoints.h"
 
 class BaxterMotion
 {
@@ -31,11 +33,13 @@ private:
     ros::NodeHandle nh;
 
     ros::Subscriber right_target_sub;
+    ros::Subscriber right_target_joints_sub;
 
     tf::TransformListener tfListener;
 
     // callback functions
     void rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg);
+    void rightTargetJointsCB(const baxter_learning_from_egocentric_video::TargetJointsConstPtr &msg);
 
     //geometry_msgs::Pose target_pose_right;
 
@@ -44,6 +48,9 @@ private:
 
     // test functions
     void right_move_test();
+    
+    unsigned int center_left_cnt;
+    unsigned int total_target_cnt;
 };
 
 #endif
