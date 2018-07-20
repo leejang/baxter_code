@@ -30,6 +30,8 @@ from cv_bridge import CvBridge, CvBridgeError
 from baxter_core_msgs.msg import EndpointState
 import image_geometry
 import tf
+import tf2_ros
+import tf2_geometry_msgs
 
 labelmap_file = 'data/egohands_future/labelmap_voc.prototxt'
 file = open(labelmap_file, 'r')
@@ -59,13 +61,14 @@ def key_func(x):
         return "{:>10}".format(mat.group(1)) # right align to 10 digits.
 
 # SSD 500 x 500 with auto encoder
-model_def = '/home/leejang/lib/ssd_caffe/caffe/models/VGGNet/egohands/SSD_BEST_AUTOENC/deploy.prototxt'
-model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/VGGNet/egohands/SSD_BEST_AUTOENC/egohands_SSD_2_500x500_iter_50000.caffemodel'
+model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/VGGNet/egohands_flow/SSD_twoStream_500x500/deploy.prototxt'
+model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/VGGNet/egohands_flow/SSD_twoStream_500x500/egohands_flow_SSD_twoStream_500x500_iter_50000.caffemodel'
+
 
 # future regression model for hands
 # ten con
-reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_con10_test.prototxt'
-reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_iter_100000.caffemodel'
+reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_test.prototxt'
+reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_iter_60000.caffemodel'
 
 
 class hands_forecasting:
@@ -86,7 +89,8 @@ class hands_forecasting:
      self.detection_pub = rospy.Publisher('/detection/right/target_pos',Target)
 
      # listner for TF
-     self.listener = tf.TransformListener()
+     self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
+     self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
      # Target Psition to move Baxter Hands
      self.right_target_msg = Target()
@@ -110,9 +114,17 @@ class hands_forecasting:
      self.transformer.set_raw_scale('data', 255)  # the reference model operates on images in [0,255] range instead of [0,1]
      self.transformer.set_channel_swap('data', (2,1,0))  # the reference model has channels in BGR order instead of RGB
 
+     # for optical flow
+     self.transformer_flow = caffe.io.Transformer({'data': self.net.blobs['flowx'].data.shape})
+     self.transformer_flow.set_transpose('data', (2, 0, 1))
+     self.transformer_flow.set_mean('data', np.array([128])) # mean pixel
+     self.transformer_flow.set_raw_scale('data', 255)  # the reference model operates on images in [0,255] range instead of [0,1]
+
      # for SSD 500
      self.image_resize = 500
      self.net.blobs['data'].reshape(1,3,self.image_resize,self.image_resize)
+     self.net.blobs['flowx'].reshape(1,1,self.image_resize,self.image_resize)
+     self.net.blobs['flowy'].reshape(1,1,self.image_resize,self.image_resize)
 
      self.image_cnt = 0;
      self.gesture_cnt = 1;
@@ -132,14 +144,9 @@ class hands_forecasting:
         print e
 
       try:
-        #self.listener.waitForTransform('/camera_link', '/left_gripper_base', rospy.Time.now(), rospy.Duration(3.0))        
-        #(trans, rot) = self.listener.lookupTransform('/camera_link', '/left_gripper_base', rospy.Time(0))        
-        #(self.trans, self.rot) = self.listener.lookupTransform('/world', '/left_gripper_base', rospy.Time(0))
-        # parameters: target_frame, soource frame, time
-        # returns, position as a translation (x,y,z) and orientations (x,y,z,w)
-        (self.my_left_trans, self.my_left_rot) = self.listener.lookupTransform('/zed_depth_camera', '/left_gripper_base', rospy.Time(0))        
-        (self.my_right_trans, self.my_right_rot) = self.listener.lookupTransform('/zed_depth_camera', '/right_gripper_base', rospy.Time(0))        
-      except (tf.LookupException, tf.ConnectivityException), e:
+        self.my_right = self.tf_buffer.lookup_transform('zed_depth_camera', 'right_gripper_base', rospy.Time(0), rospy.Duration(1.0))
+
+      except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException), e:
         print e
 
       # write image
@@ -160,9 +167,9 @@ class hands_forecasting:
       #print("Proesssed in {:.3f} seconds.".format(time.time() - t))
 
 
-      self.lock.acquire()
+      #self.lock.acquire()
       self.do_hands_forecasting()
-      self.lock.release()
+      #self.lock.release()
 
       self.image_cnt += 1
 
@@ -206,8 +213,11 @@ class hands_forecasting:
       #cv2.putText(cv_img, 'Hana and Yuna\'s Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
 
       #print (self.trans[0], self.trans[1], self.trans[2])
-      self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
-      self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
+      #self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
+      #self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
+
+      self.my_right_2d = \
+        self.cam_model.project3dToPixel((self.my_right.transform.translation.x, self.my_right.transform.translation.y, self.my_right.transform.translation.z))
 
       #print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
       #print (int(self.my_right_2d[0]), int(self.my_right_2d[1]))
@@ -234,47 +244,55 @@ class hands_forecasting:
           cv_img[y_min:y_max, x_min:x_max] = rhand_cv_img[0:108, 0:142]
 
       cv2.imwrite(cur_image_w_r, cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-      #cv2.imwrite(cur_image, cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
-      # to publish image on Baxter's screen
-      #img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
-      #self.screen_pub.publish(img_msg)
-
-      # resize (batch,dim,height,width)
-      #net.blobs['data'].reshape(1,3,360,640)
-
-      # load image
-      cur_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image_w_r.jpg'
-      image = caffe.io.load_image(cur_image)
-
-      transformed_image = self.transformer.preprocess('data', image)
-      self.net.blobs['data'].data[...] = transformed_image
-
-      # Forward pass.
-      detections = self.net.forward()['detection_out']
-
-      # Extract feature vector
-      extract_features = self.net.blobs[self.extract_layer].data
+      print self.gesture_cnt
 
       if self.gesture_cnt == 1:
-        self.con_extract_features = extract_features
-      # concatenate ten extracted features
-      elif self.gesture_cnt < 10:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
-        #print con_extract_features.shape
+        print ("skip the first frame for optical flow")
+        self.frame1 = cv_img
       else:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
+        t = time.time()
+        self.frame2 = cv_img
+        prvs = cv2.cvtColor(self.frame1,cv2.COLOR_BGR2GRAY)
+        next = cv2.cvtColor(self.frame2,cv2.COLOR_BGR2GRAY)
+        flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        #flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 1, 15, 1, 5, 1.2, 0)
+        horz = cv2.normalize(flow[...,0], None, 0, 255, cv2.NORM_MINMAX)
+        vert = cv2.normalize(flow[...,1], None, 0, 255, cv2.NORM_MINMAX)
+        horz = horz.astype('uint8')
+        vert = vert.astype('uint8')
+        flow_x_f = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/flow_x_cur_image_w_r.jpg'
+        flow_y_f = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/flow_y_cur_image_w_r.jpg'
+
+        cv2.imwrite(flow_x_f, horz)
+        cv2.imwrite(flow_y_f, vert)
+
+        print("Optical Flow Proesssed in {:.3f} seconds.".format(time.time() - t))
+        t = time.time()
+        # update the previous frame
+        self.frame1 = self.frame2
+ 
+        # load image
+        image = caffe.io.load_image(cur_image_w_r)
+        flow_x = caffe.io.load_image(flow_x_f, color=False)
+        flow_y = caffe.io.load_image(flow_y_f, color=False)
+
+        transformed_image = self.transformer.preprocess('data', image)
+        self.net.blobs['data'].data[...] = transformed_image
+        self.net.blobs['flowx'].data[...] = self.transformer_flow.preprocess('data', flow_x)
+        self.net.blobs['flowy'].data[...] = self.transformer_flow.preprocess('data', flow_y)
+
+        # Forward pass.
+        detections = self.net.forward()['detection_out']
+
+        # Extract feature vector
+        extract_features = self.net.blobs[self.extract_layer].data
 
         # do regression
-        # con
-        self.reg_net.blobs['data'].data[...] = self.con_extract_features
         # single
-        #self.reg_net.blobs['data'].data[...] = extract_features
+        self.reg_net.blobs['data'].data[...] = extract_features
         future_features = self.reg_net.forward()['fc2']
         #print type(future_features)
-
-        # delete the oldest extracted features in concatanated feature maps
-        self.con_extract_features = np.delete(self.con_extract_features,(range(0,256)),1)
 
         # do detection with future features
         self.net.blobs[self.extract_layer].data[...] = future_features

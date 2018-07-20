@@ -64,8 +64,8 @@ model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/VGGNet/egohands/SSD_BE
 
 # future regression model for hands
 # ten con
-reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_con10_test.prototxt'
-reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_iter_100000.caffemodel'
+reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_test.prototxt'
+reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_iter_100000.caffemodel'
 
 
 class hands_forecasting:
@@ -203,7 +203,6 @@ class hands_forecasting:
 
       # screen test
       cv_img = cv2.imread(cur_image)
-      #cv2.putText(cv_img, 'Hana and Yuna\'s Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
 
       #print (self.trans[0], self.trans[1], self.trans[2])
       self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
@@ -256,100 +255,86 @@ class hands_forecasting:
       # Extract feature vector
       extract_features = self.net.blobs[self.extract_layer].data
 
-      if self.gesture_cnt == 1:
-        self.con_extract_features = extract_features
-      # concatenate ten extracted features
-      elif self.gesture_cnt < 10:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
-        #print con_extract_features.shape
-      else:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
+      # do regression
+      # single
+      self.reg_net.blobs['data'].data[...] = extract_features
+      future_features = self.reg_net.forward()['fc2']
 
-        # do regression
-        # con
-        self.reg_net.blobs['data'].data[...] = self.con_extract_features
-        # single
-        #self.reg_net.blobs['data'].data[...] = extract_features
-        future_features = self.reg_net.forward()['fc2']
-        #print type(future_features)
+      # do detection with future features
+      self.net.blobs[self.extract_layer].data[...] = future_features
+      detections = self.net.forward(start='relu_e6', end='detection_out')['detection_out']
 
-        # delete the oldest extracted features in concatanated feature maps
-        self.con_extract_features = np.delete(self.con_extract_features,(range(0,256)),1)
+      # Parse the outputs.
+      det_label = detections[0,0,:,1]
+      det_conf = detections[0,0,:,2]
+      det_xmin = detections[0,0,:,3]
+      det_ymin = detections[0,0,:,4]
+      det_xmax = detections[0,0,:,5]
+      det_ymax = detections[0,0,:,6]
 
-        # do detection with future features
-        self.net.blobs[self.extract_layer].data[...] = future_features
-        #net.blobs[extract_layer].data[...] = extract_features
-        detections = self.net.forward(start='relu_e6', end='detection_out')['detection_out']
+      # Get detections with confidence higher than 0.65.
+      #top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
+      top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.01]
 
-        # Parse the outputs.
-        det_label = detections[0,0,:,1]
-        det_conf = detections[0,0,:,2]
-        det_xmin = detections[0,0,:,3]
-        det_ymin = detections[0,0,:,4]
-        det_xmax = detections[0,0,:,5]
-        det_ymax = detections[0,0,:,6]
+      top_conf = det_conf[top_indices]
+      top_label_indices = det_label[top_indices].tolist()
+      top_labels = get_labelname(labelmap, top_label_indices)
+      top_xmin = det_xmin[top_indices]
+      top_ymin = det_ymin[top_indices]
+      top_xmax = det_xmax[top_indices]
+      top_ymax = det_ymax[top_indices]
 
-        # Get detections with confidence higher than 0.65.
-        #top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
-        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.01]
+      colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,102,0), (102,0,204), (204,102,0), (255,102,204), (0,255,255)]
 
-        top_conf = det_conf[top_indices]
-        top_label_indices = det_label[top_indices].tolist()
-        top_labels = get_labelname(labelmap, top_label_indices)
-        top_xmin = det_xmin[top_indices]
-        top_ymin = det_ymin[top_indices]
-        top_xmax = det_xmax[top_indices]
-        top_ymax = det_ymax[top_indices]
+      for i in xrange(top_conf.shape[0]):
+        xmin = int(round(top_xmin[i] * image.shape[1]))
+        ymin = int(round(top_ymin[i] * image.shape[0]))
+        xmax = int(round(top_xmax[i] * image.shape[1]))
+        ymax = int(round(top_ymax[i] * image.shape[0]))
+        score = top_conf[i]
+        label = int(top_label_indices[i])
+        label_name = top_labels[i]
+        print(" %s: %.2f" %(label_name, score))
 
-        colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,102,0), (102,0,204), (204,102,0), (255,102,204), (0,255,255)]
+        text = ("%s: %.2f" %(label_name, score))
+        coords = xmin, ymin, xmax-xmin+1, ymax-ymin+1
+        centers = (xmin + xmax)/2, (ymin + ymax)/2
 
-        for i in xrange(top_conf.shape[0]):
-          xmin = int(round(top_xmin[i] * image.shape[1]))
-          ymin = int(round(top_ymin[i] * image.shape[0]))
-          xmax = int(round(top_xmax[i] * image.shape[1]))
-          ymax = int(round(top_ymax[i] * image.shape[0]))
-          score = top_conf[i]
-          label = int(top_label_indices[i])
-          label_name = top_labels[i]
-          print(" %s: %.2f" %(label_name, score))
-
-          text = ("%s: %.2f" %(label_name, score))
-          coords = xmin, ymin, xmax-xmin+1, ymax-ymin+1
-          centers = (xmin + xmax)/2, (ymin + ymax)/2
-
-          if label_name == 'my_left':
-            # Red
-            color = colors[2]
-          elif label_name == 'my_right':
-            # Blue
-            color = colors[0]
-          elif label_name == 'your_left':
-            # Green
-            color = colors[1]
-          else:
-            # Cyan
-            color = colors[3]
-
-          # to prevent bounding box is locatd out of image size
-          if (ymin < 0):
-            ymin = 0
-          if (ymax > 1080):
-            ymax = 1080
-          if (xmin < 0):
-            xmin = 0
-          if (xmax > 1920):
-            xmax = 1920
-
-          # draw bounding boxes
-          cv2.rectangle(cv_img, (xmin, ymin), (xmax, ymax), color, 3)
-          # put lable names
-          if ymin < 10:
-            cv2.putText(cv_img, text, (xmin, ymin + 20), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
-          else:
-            cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
-
+        if label_name == 'my_left':
+          # Red
+          color = colors[2]
+        elif label_name == 'my_right':
+          # Blue
+          color = colors[0]
           # publish detection topic
-          #self.detection_pub.publish(self.right_target_msg)
+          self.right_target_msg.x = (xmin + xmax)/2
+          self.right_target_msg.y = (ymin + ymax)/2
+          self.detection_pub.publish(self.right_target_msg)
+        elif label_name == 'your_left':
+          # Green
+          color = colors[1]
+        else:
+          # Cyan
+          color = colors[3]
+
+        # to prevent bounding box is locatd out of image size
+        if (ymin < 0):
+          ymin = 0
+        if (ymax > 1080):
+          ymax = 1080
+        if (xmin < 0):
+          xmin = 0
+        if (xmax > 1920):
+          xmax = 1920
+
+        # draw bounding boxes
+        cv2.rectangle(cv_img, (xmin, ymin), (xmax, ymax), color, 3)
+        # put lable names
+        if ymin < 10:
+          cv2.putText(cv_img, text, (xmin, ymin + 20), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+        else:
+          cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
+
 
       # to publish image on Baxter's screen
       img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")

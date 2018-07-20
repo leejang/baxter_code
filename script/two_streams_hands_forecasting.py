@@ -66,7 +66,10 @@ model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/VGGNet/egoh
 # future regression model for hands
 # ten con
 reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_con10_w_robot_test.prototxt'
-reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_w_robot_iter_40000.caffemodel'
+
+reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_iter_100000.caffemodel'
+# regressor trained with robot videos
+#reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_w_robot_iter_100000.caffemodel'
 
 
 class hands_forecasting:
@@ -252,7 +255,8 @@ class hands_forecasting:
         self.frame2 = cv_img
         prvs = cv2.cvtColor(self.frame1,cv2.COLOR_BGR2GRAY)
         next = cv2.cvtColor(self.frame2,cv2.COLOR_BGR2GRAY)
-        flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 1, 15, 1, 5, 1.2, 0)
+        flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        #flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 1, 15, 1, 5, 1.2, 0)
         horz = cv2.normalize(flow[...,0], None, 0, 255, cv2.NORM_MINMAX)
         vert = cv2.normalize(flow[...,1], None, 0, 255, cv2.NORM_MINMAX)
         horz = horz.astype('uint8')
@@ -320,7 +324,8 @@ class hands_forecasting:
         det_ymax = detections[0,0,:,6]
 
         # Get detections with confidence higher than 0.65.
-        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
+        #top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
+        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.01]
 
         top_conf = det_conf[top_indices]
         top_label_indices = det_label[top_indices].tolist()

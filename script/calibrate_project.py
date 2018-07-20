@@ -29,7 +29,8 @@ from baxter_learning_from_egocentric_video.msg import Target
 from cv_bridge import CvBridge, CvBridgeError
 from baxter_core_msgs.msg import EndpointState
 import image_geometry
-import tf
+import tf2_ros
+import tf2_geometry_msgs
 
 labelmap_file = 'data/egohands_future/labelmap_voc.prototxt'
 file = open(labelmap_file, 'r')
@@ -64,8 +65,8 @@ model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/VGGNet/egohands/SSD_BE
 
 # future regression model for hands
 # ten con
-reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_con10_test.prototxt'
-reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_con10_iter_100000.caffemodel'
+reg_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_test.prototxt'
+reg_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_iter_100000.caffemodel'
 
 
 class hands_forecasting:
@@ -75,8 +76,10 @@ class hands_forecasting:
      #############################################################
      # subscribers
      self.image_sub = rospy.Subscriber("/zed/rgb/image_rect_color", Image, self.img_callback, queue_size=1000)
+     #self.image_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.img_callback, queue_size=1000)
      self.left_end_sub = rospy.Subscriber("/robot/limb/left/endpoint_state", EndpointState, self.left_end_cb)
      self.right_end_sub = rospy.Subscriber("/robot/limb/right/endpoint_state", EndpointState, self.right_end_cb)
+     #self.camera_info_sub = rospy.Subscriber("/usb_cam/camera_info", CameraInfo, self.cam_info_cb)
      self.camera_info_sub = rospy.Subscriber("/zed/rgb/camera_info", CameraInfo, self.cam_info_cb)
      #self.camera_info_sub = rospy.Subscriber("/zed/depth/camera_info", CameraInfo, self.cam_info_cb)
 
@@ -86,7 +89,9 @@ class hands_forecasting:
      self.detection_pub = rospy.Publisher('/detection/right/target_pos',Target)
 
      # listner for TF
-     self.listener = tf.TransformListener()
+     self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
+     self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+     #self.listener = tf.TransformListener()
 
      # Target Psition to move Baxter Hands
      self.right_target_msg = Target()
@@ -95,32 +100,8 @@ class hands_forecasting:
 
      self.lock = threading.Lock()
 
-     self.net = caffe.Net(model_def,      # defines the structure of the mode
-                          model_weights,  # contains the trained weights
-                          caffe.TEST)     # use test mode (e.g., don't perform dropout)
-
-     self.reg_net = caffe.Net(reg_model_def,      # defines the structure of the model
-                              reg_model_weights,  # contains the trained weights
-                              caffe.TEST)         # use test mode (e.g., don't perform dropout)
-
-     # input preprocessing: 'data' is the name of the input blob == net.inputs[0]
-     self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
-     self.transformer.set_transpose('data', (2, 0, 1))
-     self.transformer.set_mean('data', np.array([104,117,123])) # mean pixel
-     self.transformer.set_raw_scale('data', 255)  # the reference model operates on images in [0,255] range instead of [0,1]
-     self.transformer.set_channel_swap('data', (2,1,0))  # the reference model has channels in BGR order instead of RGB
-
-     # for SSD 500
-     self.image_resize = 500
-     self.net.blobs['data'].reshape(1,3,self.image_resize,self.image_resize)
-
      self.image_cnt = 0;
      self.gesture_cnt = 1;
-
-     # layers to extract features
-     self.extract_layer = 'fc_e6'
-     if self.extract_layer not in self.net.blobs:
-       raise TypeError("Invalid layer name: " + self.extract_layer)
 
     def img_callback(self,data):
       # processing time check
@@ -131,17 +112,16 @@ class hands_forecasting:
       except CvBridgeError, e:
         print e
 
+
       try:
-        #self.listener.waitForTransform('/camera_link', '/left_gripper_base', rospy.Time.now(), rospy.Duration(3.0))        
-        #(trans, rot) = self.listener.lookupTransform('/camera_link', '/left_gripper_base', rospy.Time(0))        
-        #(self.trans, self.rot) = self.listener.lookupTransform('/world', '/left_gripper_base', rospy.Time(0))
-        # parameters: target_frame, soource frame, time
-        # returns, position as a translation (x,y,z) and orientations (x,y,z,w)
-        (self.my_left_trans, self.my_left_rot) = self.listener.lookupTransform('/zed_depth_camera', '/left_gripper_base', rospy.Time(0))        
-        (self.my_right_trans, self.my_right_rot) = self.listener.lookupTransform('/zed_depth_camera', '/right_gripper_base', rospy.Time(0))        
-      except (tf.LookupException, tf.ConnectivityException), e:
+        self.my_right = self.tf_buffer.lookup_transform('zed_depth_camera', 'right_gripper_base', rospy.Time(0), rospy.Duration(1.0))
+
+      except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException), e:
         print e
 
+      #self.my_right_trans = self.my_right.transform.translation
+
+      #print self.my_right.transform.translation.x
       # write image
       target_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
       #target_image = '/home/leejang/ros_ws/src/forecasting_gestures/script/'+str(self.image_cnt)+'.jpg'
@@ -163,6 +143,7 @@ class hands_forecasting:
       self.lock.acquire()
       self.do_hands_forecasting()
       self.lock.release()
+      #print("Proesssed in {:.3f} seconds.".format(time.time() - t))
 
       self.image_cnt += 1
 
@@ -203,11 +184,11 @@ class hands_forecasting:
 
       # screen test
       cv_img = cv2.imread(cur_image)
-      #cv2.putText(cv_img, 'Hana and Yuna\'s Dad!', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1,(0,0,255), 5)
 
       #print (self.trans[0], self.trans[1], self.trans[2])
-      self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
-      self.my_right_2d = self.cam_model.project3dToPixel((self.my_right_trans[0], self.my_right_trans[1], self.my_right_trans[2]))
+      #self.my_left_2d = self.cam_model.project3dToPixel((self.my_left_trans[0], self.my_left_trans[1], self.my_left_trans[2]))
+      self.my_right_2d = \
+        self.cam_model.project3dToPixel((self.my_right.transform.translation.x, self.my_right.transform.translation.y, self.my_right.transform.translation.z))
 
       #print (int(self.my_left_2d[0]), int(self.my_left_2d[1]))
       #print (int(self.my_right_2d[0]), int(self.my_right_2d[1]))
@@ -222,7 +203,7 @@ class hands_forecasting:
       rhand_center_y = int(self.my_right_2d[1])
 
       #print rhand_cv_img.shape
-      #print rhand_center_x, rhand_center_y
+      print rhand_center_x, rhand_center_y
 
       if (rhand_center_x > 71) and (rhand_center_y > 54):
         y_min = rhand_center_y - 54
@@ -245,117 +226,12 @@ class hands_forecasting:
 
       # load image
       cur_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image_w_r.jpg'
-      image = caffe.io.load_image(cur_image)
 
-      transformed_image = self.transformer.preprocess('data', image)
-      self.net.blobs['data'].data[...] = transformed_image
-
-      # Forward pass.
-      detections = self.net.forward()['detection_out']
-
-      # Extract feature vector
-      extract_features = self.net.blobs[self.extract_layer].data
-
-      if self.gesture_cnt == 1:
-        self.con_extract_features = extract_features
-      # concatenate ten extracted features
-      elif self.gesture_cnt < 10:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
-        #print con_extract_features.shape
-      else:
-        self.con_extract_features = np.concatenate((self.con_extract_features, extract_features), axis=1)
-
-        # do regression
-        # con
-        self.reg_net.blobs['data'].data[...] = self.con_extract_features
-        # single
-        #self.reg_net.blobs['data'].data[...] = extract_features
-        future_features = self.reg_net.forward()['fc2']
-        #print type(future_features)
-
-        # delete the oldest extracted features in concatanated feature maps
-        self.con_extract_features = np.delete(self.con_extract_features,(range(0,256)),1)
-
-        # do detection with future features
-        self.net.blobs[self.extract_layer].data[...] = future_features
-        #net.blobs[extract_layer].data[...] = extract_features
-        detections = self.net.forward(start='relu_e6', end='detection_out')['detection_out']
-
-        # Parse the outputs.
-        det_label = detections[0,0,:,1]
-        det_conf = detections[0,0,:,2]
-        det_xmin = detections[0,0,:,3]
-        det_ymin = detections[0,0,:,4]
-        det_xmax = detections[0,0,:,5]
-        det_ymax = detections[0,0,:,6]
-
-        # Get detections with confidence higher than 0.65.
-        #top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.65]
-        top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.01]
-
-        top_conf = det_conf[top_indices]
-        top_label_indices = det_label[top_indices].tolist()
-        top_labels = get_labelname(labelmap, top_label_indices)
-        top_xmin = det_xmin[top_indices]
-        top_ymin = det_ymin[top_indices]
-        top_xmax = det_xmax[top_indices]
-        top_ymax = det_ymax[top_indices]
-
-        colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,102,0), (102,0,204), (204,102,0), (255,102,204), (0,255,255)]
-
-        for i in xrange(top_conf.shape[0]):
-          xmin = int(round(top_xmin[i] * image.shape[1]))
-          ymin = int(round(top_ymin[i] * image.shape[0]))
-          xmax = int(round(top_xmax[i] * image.shape[1]))
-          ymax = int(round(top_ymax[i] * image.shape[0]))
-          score = top_conf[i]
-          label = int(top_label_indices[i])
-          label_name = top_labels[i]
-          print(" %s: %.2f" %(label_name, score))
-
-          text = ("%s: %.2f" %(label_name, score))
-          coords = xmin, ymin, xmax-xmin+1, ymax-ymin+1
-          centers = (xmin + xmax)/2, (ymin + ymax)/2
-
-          if label_name == 'my_left':
-            # Red
-            color = colors[2]
-          elif label_name == 'my_right':
-            # Blue
-            color = colors[0]
-          elif label_name == 'your_left':
-            # Green
-            color = colors[1]
-          else:
-            # Cyan
-            color = colors[3]
-
-          # to prevent bounding box is locatd out of image size
-          if (ymin < 0):
-            ymin = 0
-          if (ymax > 1080):
-            ymax = 1080
-          if (xmin < 0):
-            xmin = 0
-          if (xmax > 1920):
-            xmax = 1920
-
-          # draw bounding boxes
-          cv2.rectangle(cv_img, (xmin, ymin), (xmax, ymax), color, 3)
-          # put lable names
-          if ymin < 10:
-            cv2.putText(cv_img, text, (xmin, ymin + 20), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
-          else:
-            cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
-
-          # publish detection topic
-          #self.detection_pub.publish(self.right_target_msg)
 
       # to publish image on Baxter's screen
       img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
       self.screen_pub.publish(img_msg)
 
-      print("Proesssed in {:.3f} seconds.".format(time.time() - t))
       self.gesture_cnt += 1
 
 def main(args):
