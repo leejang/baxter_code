@@ -27,10 +27,8 @@ from std_msgs.msg import UInt64
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from baxter_learning_from_egocentric_video.msg import Target
-from baxter_learning_from_egocentric_video.msg import TargetJoints
 from cv_bridge import CvBridge, CvBridgeError
 from baxter_core_msgs.msg import EndpointState
-from sensor_msgs.msg import JointState
 import image_geometry
 import tf
 import tf2_ros
@@ -69,13 +67,11 @@ model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/VGGNet/egoh
 
 
 # future regression model for hands
-# single
 reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_test.prototxt'
 reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_iter_60000.caffemodel'
 
-# robot control model
-ctrl_model_def = '/home/leejang/lib/ssd_caffe/caffe/models/robot_actions/robot_action_learning_test.prototxt'
-ctrl_model_weights = '/home/leejang/lib/ssd_caffe/caffe/models/robot_actions/robot_action_iter_100000.caffemodel'
+#reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_robot_only_test.prototxt'
+#reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_robot_only_iter_100000.caffemodel'
 
 class hands_forecasting:
 
@@ -87,14 +83,12 @@ class hands_forecasting:
      self.left_end_sub = rospy.Subscriber("/robot/limb/left/endpoint_state", EndpointState, self.left_end_cb)
      self.right_end_sub = rospy.Subscriber("/robot/limb/right/endpoint_state", EndpointState, self.right_end_cb)
      self.camera_info_sub = rospy.Subscriber("/zed/rgb/camera_info", CameraInfo, self.cam_info_cb)
-     self.joint_sub = rospy.Subscriber("/robot/joint_states", JointState, self.joint_cb)
      #self.camera_info_sub = rospy.Subscriber("/zed/depth/camera_info", CameraInfo, self.cam_info_cb)
 
      ##############################################################
      # pubishers
      self.screen_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
      self.detection_pub = rospy.Publisher('/detection/right/target_pos',Target)
-     self.detection_joints_pub = rospy.Publisher('/detection/right/target_joints',TargetJoints)
      self.mission_cnt_pub = rospy.Publisher('/mission/count/',UInt64)
 
      # listner for TF
@@ -106,14 +100,6 @@ class hands_forecasting:
      self.right_target_msg.x = 0
      self.right_target_msg.y = 0
 
-     # Target Joints (7 angles) to move Baxter Hans
-     self.right_target_joints_msg = TargetJoints()
-
-     # robot manipulation net inpu
-     self.action_net_input = np.zeros(11)
-     # robot joint states
-     self.right_joints = JointState()
-
      self.lock = threading.Lock()
 
      self.net = caffe.Net(model_def,      # defines the structure of the mode
@@ -123,10 +109,6 @@ class hands_forecasting:
      self.reg_net = caffe.Net(reg_model_def,      # defines the structure of the model
                               reg_model_weights,  # contains the trained weights
                               caffe.TEST)         # use test mode (e.g., don't perform dropout)
-
-     self.action_net = caffe.Net(ctrl_model_def,      # defines the structure of the model
-                                 ctrl_model_weights,  # contains the trained weights
-                                 caffe.TEST)         # use test mode (e.g., don't perform dropout)
 
      # input preprocessing: 'data' is the name of the input blob == net.inputs[0]
      self.transformer = caffe.io.Transformer({'data': self.net.blobs['data'].data.shape})
@@ -172,9 +154,11 @@ class hands_forecasting:
 
       # write image
       target_image = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/cur_image/cur_image.jpg'
-      #target_image = '/home/leejang/ros_ws/src/forecasting_gestures/script/'+str(self.image_cnt)+'.jpg'
+      target_image_2 = '/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/video/0204/'+str(self.image_cnt)+'.jpg'
+
       #print target_image
       cv2.imwrite(target_image, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+      cv2.imwrite(target_image_2, self.cv_image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
       # crop image
       #crop_img = self.cv_image[0:360, 0:640]
@@ -202,15 +186,13 @@ class hands_forecasting:
 
       # processing time check
     def left_end_cb(self, msg):
-      tmp = 1
+      tt = 1
+      #print('left end state callback!')
 
     def right_end_cb(self, msg):
-      tmp = 1
-
-    def joint_cb(self, msg):
-      #print('robot joint states callback!')
-      self.right_joints = msg
- 
+      tt = 1
+      #print('right end state callback!')
+    
     def do_hands_forecasting(self):
 
       caffe.set_device(0)
@@ -257,6 +239,7 @@ class hands_forecasting:
       #print rhand_cv_img.shape
       #print rhand_center_x, rhand_center_y
 
+      """
       if (rhand_center_x > 71) and (rhand_center_y > 54):
         y_min = rhand_center_y - 54
         y_max = rhand_center_y + 54
@@ -265,7 +248,7 @@ class hands_forecasting:
 
         if (y_max < 640) and (x_max < 1280):
           cv_img[y_min:y_max, x_min:x_max] = rhand_cv_img[0:108, 0:142]
-
+      """
       cv2.imwrite(cur_image_w_r, cv_img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
       print self.gesture_cnt
@@ -279,6 +262,7 @@ class hands_forecasting:
         prvs = cv2.cvtColor(self.frame1,cv2.COLOR_BGR2GRAY)
         next = cv2.cvtColor(self.frame2,cv2.COLOR_BGR2GRAY)
         flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        #flow = cv2.calcOpticalFlowFarneback(prvs, next, None, 0.5, 1, 15, 1, 5, 1.2, 0)
         horz = cv2.normalize(flow[...,0], None, 0, 255, cv2.NORM_MINMAX)
         vert = cv2.normalize(flow[...,1], None, 0, 255, cv2.NORM_MINMAX)
         horz = horz.astype('uint8')
@@ -291,8 +275,6 @@ class hands_forecasting:
 
         print("Optical Flow Proesssed in {:.3f} seconds.".format(time.time() - t))
         t = time.time()
-        # update the previous frame
-        self.frame1 = self.frame2
  
         # load image
         image = caffe.io.load_image(cur_image_w_r)
@@ -366,25 +348,7 @@ class hands_forecasting:
             # publish detection topic
             self.right_target_msg.x = (xmin + xmax)/2
             self.right_target_msg.y = (ymin + ymax)/2
-
-            # current hand position
-            self.action_net_input[0] = rhand_center_x / 1000.
-            self.action_net_input[1] = rhand_center_y / 1000.
-            # future hand pisiton
-            self.action_net_input[2] = self.right_target_msg.x / 1000.
-            self.action_net_input[3] = self.right_target_msg.y / 1000.
-
-            if (len(self.right_joints.position) == 17):
-              self.action_net_input[4:11] = self.right_joints.position[9:16]
-
-              self.action_net.blobs['data'].data[...] = self.action_net_input
-              # the output of action net is joint offset
-              self.action_net_output = self.action_net.forward()['fc7']
-              self.right_target_joints_msg.joints = \
-                np.squeeze(self.right_joints.position[9:16] + ((self.action_net_output + 6.3) / 12.6))
-
-              self.detection_joints_pub.publish(self.right_target_joints_msg)
-
+            self.detection_pub.publish(self.right_target_msg)
           elif label_name == 'your_left':
             # Green
             color = colors[1]
@@ -402,6 +366,7 @@ class hands_forecasting:
           if (xmax > 1920):
             xmax = 1920
 
+          """
           # draw bounding boxes
           cv2.rectangle(cv_img, (xmin, ymin), (xmax, ymax), color, 3)
           # put lable names
@@ -409,9 +374,9 @@ class hands_forecasting:
             cv2.putText(cv_img, text, (xmin, ymin + 20), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
           else:
             cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
-
-          # publish detection topic
-          #self.detection_pub.publish(self.right_target_msg)
+          """
+        # update the previous frame
+        self.frame1 = self.frame2
 
       # to publish image on Baxter's screen
       img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
@@ -419,6 +384,7 @@ class hands_forecasting:
 
       self.mission_cnt_pub.publish(self.gesture_cnt)
       print("Proesssed in {:.3f} seconds.".format(time.time() - t))
+
       self.gesture_cnt += 1
 
 def main(args):

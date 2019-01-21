@@ -145,6 +145,17 @@ set(BAXTER_MOTION_HEADER_FILES
 )
 
 # Baxter motion (demo code)
+set(BAXTER_MOTION_2_SOURCE_FILES
+  src/baxter_motion2.cpp
+  src/baxter_controller.cpp
+)
+
+set(BAXTER_MOTION_2_HEADER_FILES
+  src/baxter_motion2.h
+  src/baxter_controller.h
+)
+
+# Baxter motion (demo code)
 set(BAXTER_MOVEIT_MOTION_SOURCE_FILES
   src/baxter_moveit_motion.cpp
   src/baxter_moveit_controller.cpp
@@ -274,6 +285,13 @@ add_executable(baxter_motion ${BAXTER_MOTION_SOURCE_FILES} ${BAXTER_MOTION_HEADE
 target_link_libraries(baxter_motion ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 ## Add cmake target dependencies of the executable/library
 add_dependencies(baxter_motion ${catkin_EXPORTED_TARGETS})
+
+## Declare a C++ executable
+add_executable(baxter_motion2 ${BAXTER_MOTION_2_SOURCE_FILES} ${BAXTER_MOTION_2_HEADER_FILES})
+## Specify libraries to link a library or executable target against
+target_link_libraries(baxter_motion2 ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+## Add cmake target dependencies of the executable/library
+add_dependencies(baxter_motion2 ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 #add_executable(baxter_moveit_motion ${BAXTER_MOVEIT_MOTION_SOURCE_FILES} ${BAXTER_MOVEIT_MOTION_HEADER_FILES})

@@ -12,8 +12,6 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include "baxter_controller.h"
-//#include <geometry_msgs/Pose.h>
-//#include "baxter_moveit_controller.h"
 #include "std_msgs/UInt64.h"
 #include "baxter_learning_from_egocentric_video/Target.h"
 #include "baxter_learning_from_egocentric_video/TargetJoints.h"
@@ -43,8 +41,6 @@ private:
     void rightTargetCB(const baxter_learning_from_egocentric_video::TargetConstPtr &msg);
     void rightTargetJointsCB(const baxter_learning_from_egocentric_video::TargetJointsConstPtr &msg);
     void missionCntCB(const std_msgs::UInt64::ConstPtr &msg);
-
-    //geometry_msgs::Pose target_pose_right;
 
     // positions, orientations
     double goal_right_pos[3], goal_right_ori[4];

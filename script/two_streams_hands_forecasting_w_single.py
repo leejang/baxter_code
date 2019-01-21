@@ -23,6 +23,7 @@ from caffe.proto import caffe_pb2
 
 # for ROS
 from std_msgs.msg import String
+from std_msgs.msg import UInt64
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from baxter_learning_from_egocentric_video.msg import Target
@@ -66,10 +67,11 @@ model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/VGGNet/egoh
 
 
 # future regression model for hands
-# ten con
 reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_test.prototxt'
 reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_iter_60000.caffemodel'
 
+#reg_model_def = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/robot_regression_7cv_2fc_single_robot_only_test.prototxt'
+#reg_model_weights = '/home/leejang/lib/two_stream_ssd_caffe/caffe/models/robot_regression/7cv_2fc_single_robot_only_iter_100000.caffemodel'
 
 class hands_forecasting:
 
@@ -87,6 +89,7 @@ class hands_forecasting:
      # pubishers
      self.screen_pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
      self.detection_pub = rospy.Publisher('/detection/right/target_pos',Target)
+     self.mission_cnt_pub = rospy.Publisher('/mission/count/',UInt64)
 
      # listner for TF
      self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
@@ -269,8 +272,6 @@ class hands_forecasting:
 
         print("Optical Flow Proesssed in {:.3f} seconds.".format(time.time() - t))
         t = time.time()
-        # update the previous frame
-        self.frame1 = self.frame2
  
         # load image
         image = caffe.io.load_image(cur_image_w_r)
@@ -341,6 +342,10 @@ class hands_forecasting:
           elif label_name == 'my_right':
             # Blue
             color = colors[0]
+            # publish detection topic
+            self.right_target_msg.x = (xmin + xmax)/2
+            self.right_target_msg.y = (ymin + ymax)/2
+            self.detection_pub.publish(self.right_target_msg)
           elif label_name == 'your_left':
             # Green
             color = colors[1]
@@ -366,14 +371,16 @@ class hands_forecasting:
           else:
             cv2.putText(cv_img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_DUPLEX, 1, color, 2)
 
-          # publish detection topic
-          #self.detection_pub.publish(self.right_target_msg)
+        # update the previous frame
+        self.frame1 = self.frame2
 
       # to publish image on Baxter's screen
       img_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding="bgr8")
       self.screen_pub.publish(img_msg)
 
+      self.mission_cnt_pub.publish(self.gesture_cnt)
       print("Proesssed in {:.3f} seconds.".format(time.time() - t))
+
       self.gesture_cnt += 1
 
 def main(args):

@@ -8,7 +8,7 @@
 #include "baxter_motion.h"
 
 // 0.1 ~ 0.13
-#define TABLE_Z 0.13
+#define TABLE_Z 0.12
 #define FIXED_ORI_X 0.73
 #define FIXED_ORI_Y 0.32
 #define FIXED_ORI_Z 0.6
@@ -66,16 +66,18 @@ void BaxterMotion::rightTargetCB(const baxter_learning_from_egocentric_video::Ta
 {
     ROS_INFO("[%d] I hread: [%d %d]", mission_cnt, msg->x, msg->y);
 
-    if (mission_cnt < 5) {
+    if ((msg->x > 600) && (msg->x < 900)) {
+        center_cnt++;
+    }
+
+    // start_mission
+    if ((mission_cnt < 15) && (center_cnt > 0)) {
+        // init position
         double right_end[] = {0.8509758420794333, -0.5763932810479442,0.0337475773334791, 1.3004322129298596, 1.363708920430133, 0.5000777368506448, 0.4693981210929366};
         baxter_ctrl->moveRightToJointPositions(right_end);
-    } else if ((mission_cnt >= 5) && (mission_cnt < 15)) {
-        right_move_test(msg->x, msg->y);
     } else if ((mission_cnt >= 15) && (mission_cnt < 25)) {
-        double right_end[] = {1.4442429117941171, 0.19980099762207515, -0.28723790253154374, 0.023776702212223912, 3.057607205452601, -0.012655341500054663, -2.954446997467307};
-        baxter_ctrl->moveRightToJointPositions(right_end);
+        right_move_test(msg->x, msg->y);
     }
-   
 }
 
 void BaxterMotion::rightTargetJointsCB(const baxter_learning_from_egocentric_video::TargetJointsConstPtr &msg)
@@ -84,21 +86,20 @@ void BaxterMotion::rightTargetJointsCB(const baxter_learning_from_egocentric_vid
               msg->joints[0], msg->joints[1], msg->joints[2],
               msg->joints[3], msg->joints[4], msg->joints[5], msg->joints[6]);
 
-    if (mission_cnt < 5) {
+    // start_mission
+    if (mission_cnt < 15) {
+        // init position
         double right_end[] = {0.8509758420794333, -0.5763932810479442,0.0337475773334791, 1.3004322129298596, 1.363708920430133, 0.5000777368506448, 0.4693981210929366};
         baxter_ctrl->moveRightToJointPositions(right_end);
-    } else if ((mission_cnt >= 5) && (mission_cnt < 15)) {
+    } else if ((mission_cnt >= 15) && (mission_cnt < 25)) {
+       
         double right_end[7] = {0,};
         for (int i = 0; i < 7; i++) {
             right_end[i] = msg->joints[i];
         }
         baxter_ctrl->moveRightToJointPositions(right_end);
-    } else if ((mission_cnt >= 15) && (mission_cnt < 25)) {
-        double right_end[] = {1.4442429117941171, 0.19980099762207515, -0.28723790253154374, 0.023776702212223912, 3.057607205452601, -0.012655341500054663, -2.954446997467307};
-        baxter_ctrl->moveRightToJointPositions(right_end);
     }
 }
-
 
 void BaxterMotion::missionCntCB(const std_msgs::UInt64::ConstPtr &msg)
 {
@@ -106,12 +107,12 @@ void BaxterMotion::missionCntCB(const std_msgs::UInt64::ConstPtr &msg)
     mission_cnt = msg->data;
 
     if ((mission_cnt >= 25) && (mission_cnt < 35)) {
-        double right_end2[] = {0.49854375606275947, 0.21207284392515846, -0.4195437454866607, -0.041033986075934815, 0.32597091742565043, 0.026461168591023387, -3.0591411862404865};
+        // push
+        double right_end2[] = {0.9970875121255189, -0.10162622719740866, 0.02454369260616662, 0.4751505490475069, 1.3675438723998463, 0.2151408055009293, 0.47246608266870743};
         baxter_ctrl->moveRightToJointPositions(right_end2);
     } else if (mission_cnt >= 35) {
         baxter_ctrl->moveToNeutral();
     }
-
 }
 
 void BaxterMotion::right_move_test(int img_x, int img_y)

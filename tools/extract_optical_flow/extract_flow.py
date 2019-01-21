@@ -116,7 +116,8 @@ def extract_flow(path, key_func):
 ###############################################
 # Main
 ###############################################
-target_dir = "/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/new_robot_video/"
+#target_dir = "/home/leejang/ros_ws/src/baxter_learning_from_egocentric_video/video/0204/tt"
+target_dir = "/home/leejang/data/pasting_hands/0120/s0120_w_hands/"
 
 subdirs = [x[0] for x in os.walk(target_dir)]
 
